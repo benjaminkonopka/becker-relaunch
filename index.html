@@ -238,6 +238,63 @@
        EMBED WIDGET (keep dark)
     ══════════════════════════════════════ */
     .dark-widget { background:#060d09; }
+
+    /* ══════════════════════════════════════
+       RESPONSIVE
+    ══════════════════════════════════════ */
+
+    /* Tablet */
+    @media (max-width: 1024px) {
+      #system-grid { grid-template-columns: repeat(2, 1fr) !important; }
+    }
+
+    /* Mobile */
+    @media (max-width: 768px) {
+      /* Nav */
+      #nav-links { display: none !important; }
+
+      /* Hero */
+      #hero-content {
+        flex-direction: column !important;
+        gap: 36px !important;
+      }
+      #hero-content > div:first-child { min-width: 0 !important; }
+      #weather-wrap {
+        width: 100% !important;
+        height: 260px !important;
+      }
+
+      /* Stats: 2×2 */
+      #stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
+      #stats-grid > div:nth-child(2) { border-right: none !important; }
+      #stats-grid > div:nth-child(1),
+      #stats-grid > div:nth-child(2) { border-bottom: 1px solid rgba(22,163,74,0.1); }
+
+      /* System */
+      #system-grid { grid-template-columns: 1fr !important; }
+
+      /* Roadmap */
+      #roadmap-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
+
+      /* Tech stack */
+      #tech-grid { grid-template-columns: 1fr !important; }
+
+      /* Future */
+      #future-grid { grid-template-columns: 1fr !important; gap: 24px !important; }
+
+      /* Footer */
+      #footer-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
+      #footer-grid > div:last-child {
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 14px !important;
+      }
+    }
+
+    @media (max-width: 480px) {
+      /* Stats: keep 2-col but tighter */
+      #stats-grid > div { padding: 18px 14px !important; }
+    }
   </style>
 </head>
 <body>
@@ -251,7 +308,7 @@
       </div>
       <span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:#16a34a;letter-spacing:0.04em;">Marienschlucht</span>
     </div>
-    <div style="display:flex;gap:28px;align-items:center;">
+    <div id="nav-links" style="display:flex;gap:28px;align-items:center;">
       <a href="#system" class="nav-link">System</a>
       <a href="#roadmap" class="nav-link">Roadmap</a>
       <a href="#techstack" class="nav-link">Tech-Stack</a>
@@ -267,7 +324,7 @@
   <div style="position:absolute;top:-160px;right:-160px;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(22,163,74,0.07) 0%,transparent 70%);pointer-events:none;"></div>
   <div style="position:absolute;bottom:-100px;left:-100px;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(22,163,74,0.05) 0%,transparent 70%);pointer-events:none;"></div>
 
-  <div style="max-width:1100px;margin:0 auto;padding:0 24px;display:flex;align-items:center;gap:64px;justify-content:space-between;">
+  <div id="hero-content" style="max-width:1100px;margin:0 auto;padding:0 24px;display:flex;align-items:center;gap:64px;justify-content:space-between;">
 
     <!-- Left: text -->
     <div style="flex:1;min-width:0;">
@@ -440,7 +497,7 @@
 
 <!-- Stats strip -->
 <section style="border-top:1px solid rgba(22,163,74,0.1);border-bottom:1px solid rgba(22,163,74,0.1);background:#f0f7f3;">
-  <div style="max-width:1100px;margin:0 auto;padding:0 24px;display:grid;grid-template-columns:repeat(4,1fr);">
+  <div id="stats-grid" style="max-width:1100px;margin:0 auto;padding:0 24px;display:grid;grid-template-columns:repeat(4,1fr);">
     <div style="padding:26px 24px;border-right:1px solid rgba(22,163,74,0.1);">
       <div style="font-family:'JetBrains Mono',monospace;font-size:30px;font-weight:600;color:#16a34a;letter-spacing:-0.03em;">10</div>
       <div style="font-size:13px;color:#7a9882;margin-top:4px;line-height:1.4;">Tage bis zur<br/>Live-Demo</div>
@@ -468,7 +525,7 @@
       <h2 style="font-size:clamp(28px,4vw,48px);font-weight:700;color:#0c1912;line-height:1.1;margin-bottom:18px;">Was ist das Ampelsystem?</h2>
       <p style="font-size:16px;line-height:1.8;color:#3d6849;max-width:600px;">Keine komplexe KI — nur verlässliche Daten, klare Schwellenwerte und ein Signal, das jeder versteht. Automatisch, rund um die Uhr.</p>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:18px;" class="fade-up">
+    <div id="system-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:18px;" class="fade-up">
 
       <div class="card-mid" style="padding:30px;position:relative;overflow:hidden;">
         <div style="position:absolute;top:-30px;right:-30px;width:110px;height:110px;border-radius:50%;background:radial-gradient(circle,rgba(22,163,74,0.07),transparent 70%);pointer-events:none;"></div>
@@ -588,7 +645,7 @@
       <h2 style="font-size:clamp(28px,4vw,48px);font-weight:700;color:#0c1912;line-height:1.1;margin-bottom:18px;">10-Tage-Sprint</h2>
       <p style="font-size:16px;line-height:1.8;color:#3d6849;max-width:580px;">Vom ersten API-Test bis zur Live-Demo vor dem Bürgermeister — jeder Tag hat einen klaren Fokus.</p>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start;" class="fade-up">
+    <div id="roadmap-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start;" class="fade-up">
 
       <div style="position:relative;">
         <div class="timeline-line"></div>
@@ -688,7 +745,7 @@
       <h2 style="font-size:clamp(28px,4vw,48px);font-weight:700;color:#0c1912;line-height:1.1;margin-bottom:18px;">Bewährte Komponenten,<br/>keine Experimente</h2>
       <p style="font-size:16px;line-height:1.8;color:#3d6849;max-width:540px;">Open-Source-first. Jede Komponente produktionserprobt, keine Vendor-Lock-ins.</p>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;" class="fade-up">
+    <div id="tech-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;" class="fade-up">
 
       <div class="card-mid" style="padding:26px;display:flex;gap:18px;align-items:flex-start;">
         <div style="width:46px;height:46px;border-radius:11px;background:rgba(254,243,199,0.7);border:1px solid rgba(217,119,6,0.18);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
@@ -765,7 +822,7 @@
       <p style="font-size:16px;line-height:1.8;color:#3d6849;max-width:560px;">Das Ampel-Widget lässt sich in jede bestehende Website integrieren — Gemeinde-Portal, Tourismusseite, App. Aktueller Status, immer live.</p>
     </div>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:start;" class="fade-up">
+    <div id="future-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:start;" class="fade-up">
 
       <!-- Browser mockup -->
       <div>
@@ -888,7 +945,7 @@
 <!-- Footer -->
 <footer style="padding:72px 0 44px;background:#f0f7f3;border-top:1px solid rgba(22,163,74,0.1);">
   <div style="max-width:1100px;margin:0 auto;padding:0 24px;">
-    <div style="display:grid;grid-template-columns:1fr auto;gap:48px;align-items:center;margin-bottom:56px;" class="fade-up">
+    <div id="footer-grid" style="display:grid;grid-template-columns:1fr auto;gap:48px;align-items:center;margin-bottom:56px;" class="fade-up">
       <div>
         <h2 style="font-size:clamp(24px,3.5vw,40px);font-weight:700;color:#0c1912;line-height:1.15;letter-spacing:-0.03em;margin-bottom:14px;">Bereit für die Live-Demo<br/>vor dem Bürgermeister.</h2>
         <p style="font-size:15px;line-height:1.75;color:#3d6849;max-width:460px;">Tag 10: Die vollständige Datenkette von Sensor bis Ampel-Signal — transparent, nachvollziehbar, produktionsreif.</p>
