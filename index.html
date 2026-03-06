@@ -20,6 +20,32 @@
       --border:       #252525;
       --text:         #F0EDE8;
       --muted:        rgba(240, 237, 232, 0.45);
+      --nav-bg:       rgba(12, 12, 12, 0.88);
+      --footer-bg:    #0A0A0A;
+      --logo-filter:  invert(1);
+      --svc-overlay1: rgba(12,12,12,0.96);
+      --svc-overlay2: rgba(12,12,12,0.98);
+      --svc-overlay3: rgba(12,12,12,0.35);
+      --svc-overlay4: rgba(12,12,12,0.6);
+      --svc-overlay5: rgba(12,12,12,0.1);
+    }
+
+    html.light {
+      --dark:         #F5F2ED;
+      --surface:      #EDEAE4;
+      --elevated:     #E4E0D9;
+      --border:       #D2CEC6;
+      --text:         #1C1A17;
+      --muted:        rgba(28, 26, 23, 0.5);
+      --orange-dim:   rgba(232, 85, 0, 0.09);
+      --nav-bg:       rgba(245, 242, 237, 0.92);
+      --footer-bg:    #E8E5DF;
+      --logo-filter:  none;
+      --svc-overlay1: rgba(245,242,237,0.96);
+      --svc-overlay2: rgba(245,242,237,0.98);
+      --svc-overlay3: rgba(245,242,237,0.35);
+      --svc-overlay4: rgba(245,242,237,0.6);
+      --svc-overlay5: rgba(245,242,237,0.1);
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -57,7 +83,7 @@
       align-items: center;
       justify-content: space-between;
       padding: 0 3rem;
-      background: rgba(12, 12, 12, 0.88);
+      background: var(--nav-bg);
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
       border-bottom: 1px solid rgba(232, 85, 0, 0.12);
@@ -66,7 +92,7 @@
 
     .nav-logo img {
       height: 32px;
-      filter: invert(1);
+      filter: var(--logo-filter);
       display: block;
     }
 
@@ -376,11 +402,11 @@
     .svc-overlay {
       position: absolute;
       inset: 0;
-      background: linear-gradient(to top, rgba(12,12,12,0.96) 0%, rgba(12,12,12,0.35) 55%, transparent 100%);
+      background: linear-gradient(to top, var(--svc-overlay1) 0%, var(--svc-overlay3) 55%, transparent 100%);
       transition: opacity 0.3s;
     }
     .svc:hover .svc-overlay {
-      background: linear-gradient(to top, rgba(12,12,12,0.98) 0%, rgba(12,12,12,0.6) 60%, rgba(12,12,12,0.1) 100%);
+      background: linear-gradient(to top, var(--svc-overlay2) 0%, var(--svc-overlay4) 60%, var(--svc-overlay5) 100%);
     }
 
     /* orange corner accent on hover */
@@ -625,7 +651,7 @@
 
     .loc-region {
       font-size: 0.73rem;
-      color: rgba(240,237,232,0.3);
+      color: var(--muted);
       font-weight: 300;
     }
 
@@ -691,7 +717,7 @@
 
     /* ─── FOOTER ────────────────────────────────── */
     footer {
-      background: #0A0A0A;
+      background: var(--footer-bg);
       border-top: 1px solid var(--border);
       padding: 4.5rem 3rem 2.5rem;
     }
@@ -711,7 +737,7 @@
 
     .footer-logo {
       height: 28px;
-      filter: invert(1);
+      filter: var(--logo-filter);
       opacity: 0.6;
       display: block;
       margin-bottom: 1.25rem;
@@ -720,7 +746,7 @@
     .footer-tagline {
       font-size: 0.82rem;
       line-height: 1.7;
-      color: rgba(240,237,232,0.3);
+      color: var(--muted);
       font-weight: 300;
     }
 
@@ -730,14 +756,14 @@
       font-size: 0.68rem;
       letter-spacing: 0.22em;
       text-transform: uppercase;
-      color: rgba(240,237,232,0.3);
+      color: var(--muted);
       margin-bottom: 1.25rem;
     }
 
     .footer-links { display: flex; flex-direction: column; gap: 0.7rem; }
     .footer-links a {
       font-size: 0.85rem;
-      color: rgba(240,237,232,0.45);
+      color: var(--muted);
       text-decoration: none;
       transition: color 0.2s;
     }
@@ -754,13 +780,13 @@
 
     .footer-copy {
       font-size: 0.73rem;
-      color: rgba(240,237,232,0.2);
+      color: var(--muted);
     }
 
     .footer-legal { display: flex; gap: 2rem; }
     .footer-legal a {
       font-size: 0.73rem;
-      color: rgba(240,237,232,0.2);
+      color: var(--muted);
       text-decoration: none;
       transition: color 0.2s;
     }
@@ -781,6 +807,37 @@
     @keyframes fadeUp {
       to { opacity: 1; transform: translateY(0); }
     }
+
+    /* ─── THEME TOGGLE ──────────────────────────── */
+    .theme-toggle {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: var(--elevated);
+      color: var(--muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.2s, border-color 0.2s, color 0.2s, transform 0.18s;
+    }
+    .theme-toggle:hover {
+      background: var(--orange-dim);
+      border-color: rgba(232, 85, 0, 0.35);
+      color: var(--orange);
+      transform: rotate(15deg);
+    }
+    .theme-toggle:focus-visible {
+      outline: 2px solid var(--orange);
+      outline-offset: 2px;
+    }
+    .theme-toggle svg { width: 16px; height: 16px; }
+    .theme-toggle .icon-moon { display: block; }
+    .theme-toggle .icon-sun  { display: none; }
+    html.light .theme-toggle .icon-moon { display: none; }
+    html.light .theme-toggle .icon-sun  { display: block; }
 
     /* ─── ARROW SVG shorthand ───────────────────── */
     .arrow-icon {
@@ -833,6 +890,18 @@
       <a href="#">Über uns</a>
       <a href="#">Karriere</a>
       <a href="#" class="nav-cta">Direktanfrage</a>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light/dark mode">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5"/>
+          <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+      </button>
     </div>
   </nav>
 
@@ -1083,6 +1152,15 @@
   </footer>
 
   <script>
+    // Theme toggle
+    const toggle = document.getElementById('themeToggle');
+    const saved = localStorage.getItem('theme');
+    if (saved === 'light') document.documentElement.classList.add('light');
+    toggle.addEventListener('click', () => {
+      const isLight = document.documentElement.classList.toggle('light');
+      localStorage.setItem('theme', isLight ? 'light' : 'dark');
+    });
+
     // Hero background zoom-in on load
     const heroBg = document.getElementById('heroBg');
     requestAnimationFrame(() => heroBg.classList.add('zoomed'));
