@@ -1,1076 +1,1109 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Ampelsystem Marienschlucht — MVP</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Paul Becker GmbH — Meisterwerke in Orange</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:ital,wght@0,300;0,400;0,500;0,600;1,300&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+
   <style>
-    * { box-sizing: border-box; }
+    :root {
+      --orange:       #E85500;
+      --orange-light: #FF6B1A;
+      --orange-dim:   rgba(232, 85, 0, 0.12);
+      --dark:         #0C0C0C;
+      --surface:      #141414;
+      --elevated:     #1E1E1E;
+      --border:       #252525;
+      --text:         #F0EDE8;
+      --muted:        rgba(240, 237, 232, 0.45);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
 
     body {
-      font-family: 'Space Grotesk', sans-serif;
-      background: #f8fbf9;
-      color: #0c1912;
+      background: var(--dark);
+      color: var(--text);
+      font-family: 'Barlow', sans-serif;
+      font-weight: 400;
       overflow-x: hidden;
     }
 
-    h1,h2,h3 { font-family: 'Space Grotesk', sans-serif; letter-spacing: -0.03em; }
-
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: #f0f7f3; }
-    ::-webkit-scrollbar-thumb { background: rgba(22,163,74,0.25); border-radius: 3px; }
-
-    /* ── Cards ── */
-    .card { background:#fff; border:1px solid rgba(22,163,74,0.13); border-radius:14px; box-shadow:0 1px 3px rgba(0,0,0,0.05),0 4px 14px rgba(0,0,0,0.04); }
-    .card-mid { background:#fff; border:1px solid rgba(22,163,74,0.18); border-radius:14px; box-shadow:0 2px 8px rgba(0,0,0,0.07),0 8px 24px rgba(0,0,0,0.05); }
-    .card-high { background:#fff; border:1px solid rgba(22,163,74,0.22); border-radius:14px; box-shadow:0 4px 12px rgba(0,0,0,0.08),0 16px 40px rgba(0,0,0,0.06); }
-
-    /* ── Badge ── */
-    .badge {
-      display:inline-flex; align-items:center; gap:6px;
-      font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:500;
-      letter-spacing:0.06em; text-transform:uppercase; padding:4px 10px;
-      border-radius:4px; background:rgba(22,163,74,0.08);
-      border:1px solid rgba(22,163,74,0.2); color:#16a34a;
+    /* ─── NOISE OVERLAY ─────────────────────────── */
+    .noise-layer {
+      position: relative;
+    }
+    .noise-layer::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 2;
     }
 
-    /* ── Signal dot ── */
-    .signal-dot {
-      width:8px; height:8px; border-radius:50%; background:#22c55e;
-      display:inline-block; flex-shrink:0;
-      animation:blink 1.8s ease-in-out infinite;
-    }
-    @keyframes blink {
-      0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.3;transform:scale(0.7)}
+    /* ─── NAV ───────────────────────────────────── */
+    nav {
+      position: fixed;
+      inset: 0 0 auto 0;
+      z-index: 200;
+      height: 68px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 3rem;
+      background: rgba(12, 12, 12, 0.88);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid rgba(232, 85, 0, 0.12);
+      transition: background 0.3s;
     }
 
-    /* ── Nav ── */
-    .nav-link {
-      font-family:'JetBrains Mono',monospace; font-size:13px;
-      color:#7a9882; text-decoration:none; letter-spacing:0.04em;
-      transition:color 0.15s ease;
+    .nav-logo img {
+      height: 32px;
+      filter: invert(1);
+      display: block;
     }
-    .nav-link:hover { color:#0c1912; }
 
-    /* ── Buttons ── */
-    .btn-primary {
-      display:inline-flex; align-items:center; gap:8px; padding:11px 22px;
-      border-radius:8px; background:#16a34a; color:#fff; font-weight:600;
-      font-size:14px; text-decoration:none; border:none; cursor:pointer;
-      box-shadow:0 2px 8px rgba(22,163,74,0.25),0 6px 20px rgba(22,163,74,0.15);
-      transition:transform 0.18s cubic-bezier(0.34,1.56,0.64,1),box-shadow 0.18s ease;
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 2.25rem;
     }
-    .btn-primary:hover { transform:translateY(-2px); box-shadow:0 4px 14px rgba(22,163,74,0.35),0 10px 28px rgba(22,163,74,0.2); }
-    .btn-primary:active { transform:translateY(0); }
-    .btn-primary:focus-visible { outline:2px solid #16a34a; outline-offset:3px; }
+
+    .nav-links a {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600;
+      font-size: 0.78rem;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+
+    .nav-cta {
+      background: var(--orange) !important;
+      color: var(--dark) !important;
+      padding: 0.55rem 1.3rem;
+      clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
+      transition: background 0.2s, transform 0.2s !important;
+    }
+    .nav-cta:hover {
+      background: var(--orange-light) !important;
+      transform: translateY(-1px);
+    }
+
+    /* ─── HERO ──────────────────────────────────── */
+    .hero {
+      position: relative;
+      height: 100svh;
+      min-height: 680px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      overflow: hidden;
+    }
+
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      background-image: url('/assets/hero.jpg');
+      background-size: cover;
+      background-position: center 30%;
+      transform: scale(1.06);
+      transition: transform 10s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      will-change: transform;
+    }
+    .hero-bg.zoomed { transform: scale(1); }
+
+    .hero-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        160deg,
+        rgba(12,12,12,0.25) 0%,
+        rgba(12,12,12,0.08) 35%,
+        rgba(12,12,12,0.55) 65%,
+        rgba(12,12,12,0.97) 100%
+      );
+    }
+
+    /* diagonal orange stripe */
+    .hero-stripe {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, var(--orange) 0%, var(--orange-light) 40%, transparent 80%);
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 3;
+      padding: 0 3rem 4.5rem;
+      max-width: 1400px;
+      width: 100%;
+    }
+
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.35rem 0.9rem;
+      background: var(--orange-dim);
+      border: 1px solid rgba(232, 85, 0, 0.35);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600;
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--orange);
+      margin-bottom: 1.75rem;
+      opacity: 0;
+      transform: translateY(16px);
+      animation: fadeUp 0.55s ease 0.3s forwards;
+    }
+    .hero-eyebrow::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--orange);
+      flex-shrink: 0;
+    }
+
+    .hero-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(5.5rem, 13vw, 14rem);
+      line-height: 0.88;
+      letter-spacing: -0.01em;
+      color: var(--text);
+      opacity: 0;
+      transform: translateY(24px);
+      animation: fadeUp 0.75s ease 0.45s forwards;
+    }
+    .hero-title .accent { color: var(--orange); }
+
+    .hero-bottom {
+      margin-top: 2rem;
+      display: flex;
+      align-items: flex-end;
+      gap: 3rem;
+      opacity: 0;
+      transform: translateY(16px);
+      animation: fadeUp 0.55s ease 0.7s forwards;
+    }
+
+    .hero-desc {
+      font-size: 0.95rem;
+      line-height: 1.75;
+      color: var(--muted);
+      max-width: 360px;
+      font-weight: 300;
+    }
+
+    .btn-orange {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.65rem;
+      background: var(--orange);
+      color: var(--dark);
+      padding: 0.85rem 1.75rem;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 0.82rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      text-decoration: none;
+      clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%);
+      transition: background 0.2s, transform 0.18s;
+      flex-shrink: 0;
+    }
+    .btn-orange:hover {
+      background: var(--orange-light);
+      transform: translateY(-2px);
+    }
 
     .btn-ghost {
-      display:inline-flex; align-items:center; gap:8px; padding:11px 22px;
-      border-radius:8px; background:transparent; color:#16a34a; font-weight:500;
-      font-size:14px; text-decoration:none; cursor:pointer;
-      border:1px solid rgba(22,163,74,0.3);
-      transition:transform 0.18s cubic-bezier(0.34,1.56,0.64,1),border-color 0.18s ease,background 0.18s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.65rem;
+      background: transparent;
+      color: var(--muted);
+      padding: 0.85rem 0;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600;
+      font-size: 0.82rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      text-decoration: none;
+      border-bottom: 1px solid var(--border);
+      transition: color 0.2s, border-color 0.2s;
+      flex-shrink: 0;
     }
-    .btn-ghost:hover { transform:translateY(-2px); border-color:rgba(22,163,74,0.55); background:rgba(22,163,74,0.05); }
-    .btn-ghost:active { transform:translateY(0); }
-    .btn-ghost:focus-visible { outline:2px solid rgba(22,163,74,0.4); outline-offset:3px; }
-
-    /* ── Timeline ── */
-    .timeline-line {
-      position:absolute; left:23px; top:46px; bottom:0; width:1px;
-      background:linear-gradient(to bottom,rgba(22,163,74,0.35),rgba(22,163,74,0.03));
-    }
-    .day-num {
-      width:46px; height:46px; border-radius:8px; flex-shrink:0;
-      display:flex; align-items:center; justify-content:center;
-      font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:600;
-      background:#f0fdf4; border:1px solid rgba(22,163,74,0.22); color:#16a34a;
-      box-shadow:0 1px 4px rgba(0,0,0,0.05);
+    .btn-ghost:hover {
+      color: var(--text);
+      border-color: rgba(232, 85, 0, 0.45);
     }
 
-    /* ── Tech pill ── */
-    .tech-pill {
-      display:inline-flex; align-items:center; gap:6px; padding:5px 11px;
-      border-radius:6px; font-family:'JetBrains Mono',monospace; font-size:12px;
-      font-weight:500; background:#f0fdf4; border:1px solid rgba(22,163,74,0.18);
-      color:#16a34a;
-      transition:transform 0.18s cubic-bezier(0.34,1.56,0.64,1),border-color 0.15s ease;
-    }
-    .tech-pill:hover { transform:translateY(-2px); border-color:rgba(22,163,74,0.4); }
-
-    /* ── Fade-up scroll ── */
-    .fade-up { opacity:0; transform:translateY(22px); transition:opacity 0.55s ease,transform 0.55s cubic-bezier(0.34,1.2,0.64,1); }
-    .fade-up.visible { opacity:1; transform:translateY(0); }
-
-    /* ══════════════════════════════════════
-       WEATHER ANIMATION
-    ══════════════════════════════════════ */
-
-    #weather-wrap {
-      position:relative; width:460px; height:400px; border-radius:24px;
-      overflow:hidden; flex-shrink:0;
-      box-shadow:0 8px 32px rgba(0,0,0,0.12),0 24px 64px rgba(0,0,0,0.08),0 0 0 1px rgba(22,163,74,0.12);
+    /* ─── STATS BAR ─────────────────────────────── */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      background: var(--surface);
+      border-top: 1px solid rgba(232, 85, 0, 0.18);
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      z-index: 4;
     }
 
-    #weather-sky {
-      position:absolute; inset:0;
-      transition:background 1.4s ease;
-      background:linear-gradient(180deg,#1e7fc0 0%,#5ab4de 45%,#a2d5f0 100%);
+    .stat-item {
+      padding: 1.5rem 2.75rem;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+    .stat-item:last-child { border-right: none; }
+
+    .stat-num {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2.75rem;
+      color: var(--orange);
+      line-height: 1;
     }
 
-    .w-scene {
-      position:absolute; inset:0;
-      transition:opacity 0.9s ease;
+    .stat-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.68rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
     }
 
-    /* ── Sun ── */
-    .sun-glow {
-      position:absolute; width:130px; height:130px; border-radius:50%;
-      background:radial-gradient(circle,rgba(255,210,50,0.45) 0%,transparent 70%);
-      top:30px; right:60px;
-      animation:sun-pulse 3.5s ease-in-out infinite;
-    }
-    @keyframes sun-pulse {
-      0%,100%{transform:scale(1);opacity:0.6} 50%{transform:scale(1.15);opacity:1}
-    }
-    .sun-core {
-      position:absolute; width:64px; height:64px; border-radius:50%;
-      background:radial-gradient(circle,#ffe566 30%,#fbbf24 100%);
-      top:63px; right:93px;
-      box-shadow:0 0 24px rgba(255,200,50,0.7),0 0 48px rgba(255,180,50,0.35);
-    }
-    .sun-rays {
-      position:absolute; width:96px; height:96px;
-      top:47px; right:77px;
-      animation:spin-rays 18s linear infinite;
-    }
-    @keyframes spin-rays { to { transform:rotate(360deg); } }
-
-    .mini-cloud {
-      position:absolute;
-      animation:cloud-drift 6s ease-in-out infinite;
-    }
-    @keyframes cloud-drift {
-      0%,100%{transform:translateX(0)} 50%{transform:translateX(14px)}
+    /* ─── SECTION UTILITIES ─────────────────────── */
+    .wrap {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 3rem;
     }
 
-    /* ── Cloud shapes ── */
-    .cloud-body { background:#fff; border-radius:50px; position:relative; }
-    .cloud-bump { position:absolute; background:#fff; border-radius:50%; }
-
-    /* ── Rain ── */
-    .raindrop {
-      position:absolute; width:1.5px; border-radius:2px;
-      background:linear-gradient(to bottom,rgba(160,200,240,0.7),rgba(140,180,230,0.3));
-      animation:fall linear infinite;
+    .section-eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--orange);
+      margin-bottom: 1.25rem;
     }
-    @keyframes fall { 0%{transform:translateY(-30px);opacity:0.8} 100%{transform:translateY(420px);opacity:0.2} }
-
-    .rain-cloud-body { background:#4a5568; border-radius:60px; }
-    .rain-cloud-bump { position:absolute; background:#4a5568; border-radius:50%; }
-
-    /* ── Ground ── */
-    #weather-ground {
-      position:absolute; bottom:0; left:0; right:0; height:80px; pointer-events:none;
-    }
-
-    /* ── Traffic light in scene ── */
-    #scene-tl {
-      position:absolute; bottom:56px; left:50%; transform:translateX(-50%);
-      display:flex; flex-direction:column; align-items:center;
-    }
-    .tl-housing {
-      padding:10px 8px; border-radius:12px;
-      background:rgba(20,30,25,0.88);
-      border:1.5px solid rgba(255,255,255,0.1);
-      display:flex; flex-direction:column; gap:8px; align-items:center;
-      box-shadow:0 4px 16px rgba(0,0,0,0.4);
-    }
-    .tl-light {
-      width:20px; height:20px; border-radius:50%; opacity:0.2;
-      transition:opacity 0.5s ease, box-shadow 0.5s ease;
-    }
-    .tl-light.on { opacity:1; }
-    #tl-red.on   { box-shadow:0 0 12px rgba(239,68,68,0.9),0 0 24px rgba(239,68,68,0.5); background:#ef4444; }
-    #tl-yellow.on{ box-shadow:0 0 12px rgba(234,179,8,0.9),0 0 24px rgba(234,179,8,0.5);  background:#eab308; }
-    #tl-green.on { box-shadow:0 0 12px rgba(34,197,94,0.9),0 0 24px rgba(34,197,94,0.5);  background:#22c55e; }
-    #tl-red   { background:#ef4444; }
-    #tl-yellow{ background:#eab308; }
-    #tl-green { background:#22c55e; }
-    .tl-pole { width:4px; height:28px; background:rgba(20,30,25,0.7); border-radius:0 0 2px 2px; }
-    .tl-base { width:28px; height:5px; background:rgba(20,30,25,0.5); border-radius:3px; }
-
-    /* ── Status label inside scene ── */
-    #weather-label-wrap {
-      position:absolute; top:16px; left:16px; right:16px;
-      display:flex; justify-content:center;
-    }
-    #weather-label {
-      font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:600;
-      letter-spacing:0.08em; text-transform:uppercase;
-      padding:5px 12px; border-radius:20px;
-      background:rgba(0,0,0,0.3); backdrop-filter:blur(8px);
-      color:#fff; border:1px solid rgba(255,255,255,0.15);
-      transition:opacity 0.4s ease;
+    .section-eyebrow::before {
+      content: '';
+      display: block;
+      width: 28px;
+      height: 2px;
+      background: var(--orange);
+      flex-shrink: 0;
     }
 
-    /* ── Slider dots ── */
-    #slider-dots { position:absolute; bottom:12px; left:50%; transform:translateX(-50%); display:flex; gap:6px; }
-    .s-dot {
-      width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,0.35);
-      cursor:pointer; transition:background 0.3s ease,transform 0.3s ease;
-      border:none; padding:0;
-    }
-    .s-dot.active { background:#fff; transform:scale(1.3); }
-    .s-dot:focus-visible { outline:2px solid white; outline-offset:2px; }
-
-    /* ── Progress bar ── */
-    #progress-bar {
-      position:absolute; bottom:0; left:0; height:2px;
-      background:rgba(255,255,255,0.5); border-radius:0 2px 2px 0;
-      width:0%; transition:width 4s linear;
+    .section-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(3.25rem, 6vw, 6.5rem);
+      line-height: 0.88;
+      letter-spacing: -0.01em;
+      color: var(--text);
     }
 
-    /* ══════════════════════════════════════
-       EMBED WIDGET (keep dark)
-    ══════════════════════════════════════ */
-    .dark-widget { background:#060d09; }
-
-    /* ══════════════════════════════════════
-       RESPONSIVE
-    ══════════════════════════════════════ */
-
-    /* Tablet */
-    @media (max-width: 1024px) {
-      #system-grid { grid-template-columns: repeat(2, 1fr) !important; }
+    /* ─── SERVICES ──────────────────────────────── */
+    .services-wrap {
+      padding: 8rem 0;
     }
 
-    /* Mobile */
-    @media (max-width: 768px) {
-      /* Nav */
-      #nav-links { display: none !important; }
-
-      /* Hero */
-      #hero-content {
-        flex-direction: column !important;
-        gap: 36px !important;
-      }
-      #hero-content > div:first-child { min-width: 0 !important; }
-      #weather-wrap {
-        width: 100% !important;
-        height: 260px !important;
-      }
-
-      /* Stats: 2×2 */
-      #stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
-      #stats-grid > div:nth-child(2) { border-right: none !important; }
-      #stats-grid > div:nth-child(1),
-      #stats-grid > div:nth-child(2) { border-bottom: 1px solid rgba(22,163,74,0.1); }
-
-      /* System */
-      #system-grid { grid-template-columns: 1fr !important; }
-
-      /* Roadmap */
-      #roadmap-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
-
-      /* Tech stack */
-      #tech-grid { grid-template-columns: 1fr !important; }
-
-      /* Future */
-      #future-grid { grid-template-columns: 1fr !important; gap: 24px !important; }
-
-      /* Footer */
-      #footer-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
-      #footer-grid > div:last-child {
-        flex-direction: row !important;
-        align-items: center !important;
-        gap: 14px !important;
-      }
+    .services-header {
+      padding: 0 3rem;
+      margin-bottom: 4rem;
     }
 
-    @media (max-width: 480px) {
-      /* Stats: keep 2-col but tighter */
-      #stats-grid > div { padding: 18px 14px !important; }
+    .services-grid {
+      display: grid;
+      grid-template-columns: 1.55fr 1fr 1fr;
+      grid-template-rows: 340px 280px;
+      gap: 2px;
+      background: var(--border);
+    }
+
+    .svc {
+      position: relative;
+      overflow: hidden;
+      background: var(--surface);
+      cursor: pointer;
+    }
+    .svc.featured { grid-row: span 2; }
+
+    .svc-img {
+      position: absolute;
+      inset: 0;
+      background-size: cover;
+      background-position: center;
+      transition: transform 0.65s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+    /* Diagonal hatching pattern layered over card bg for texture */
+    .svc-img::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: repeating-linear-gradient(
+        -55deg,
+        transparent,
+        transparent 12px,
+        rgba(232, 85, 0, 0.03) 12px,
+        rgba(232, 85, 0, 0.03) 13px
+      );
+    }
+    .svc:hover .svc-img { transform: scale(1.07); }
+
+    .svc-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(12,12,12,0.96) 0%, rgba(12,12,12,0.35) 55%, transparent 100%);
+      transition: opacity 0.3s;
+    }
+    .svc:hover .svc-overlay {
+      background: linear-gradient(to top, rgba(12,12,12,0.98) 0%, rgba(12,12,12,0.6) 60%, rgba(12,12,12,0.1) 100%);
+    }
+
+    /* orange corner accent on hover */
+    .svc::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 0;
+      height: 3px;
+      background: var(--orange);
+      transition: width 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      z-index: 3;
+    }
+    .svc:hover::before { width: 100%; }
+
+    .svc-content {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 2rem 2rem 2rem;
+      z-index: 2;
+    }
+
+    .svc-num {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600;
+      font-size: 0.68rem;
+      letter-spacing: 0.2em;
+      color: var(--orange);
+      margin-bottom: 0.6rem;
+    }
+
+    .svc-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2.2rem;
+      color: var(--text);
+      line-height: 1;
+      margin-bottom: 0;
+    }
+    .svc.featured .svc-title { font-size: 3.2rem; }
+
+    .svc-desc {
+      font-size: 0.83rem;
+      line-height: 1.6;
+      color: var(--muted);
+      margin-top: 0.75rem;
+      max-height: 0;
+      overflow: hidden;
+      opacity: 0;
+      transition: max-height 0.35s ease, opacity 0.3s ease;
+      font-weight: 300;
+    }
+    .svc:hover .svc-desc { max-height: 120px; opacity: 1; }
+
+    .svc-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      margin-top: 1rem;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 0.7rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--orange);
+      opacity: 0;
+      transform: translateX(-8px);
+      transition: opacity 0.3s, transform 0.3s;
+    }
+    .svc:hover .svc-link { opacity: 1; transform: translateX(0); }
+
+    /* ─── NUMBERS ───────────────────────────────── */
+    .numbers-band {
+      background: var(--orange);
+      position: relative;
+      overflow: hidden;
+      padding: 5.5rem 3rem;
+    }
+
+    /* watermark text behind */
+    .numbers-band::before {
+      content: '1926';
+      position: absolute;
+      right: -0.5rem;
+      bottom: -1.5rem;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 22vw;
+      color: rgba(12,12,12,0.07);
+      line-height: 1;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .numbers-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0;
+      position: relative;
+      z-index: 1;
+    }
+
+    .num-item {
+      padding: 1.5rem 2.5rem;
+      border-right: 1px solid rgba(12,12,12,0.12);
+    }
+    .num-item:last-child { border-right: none; }
+
+    .num-val {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(4.5rem, 7vw, 9rem);
+      line-height: 0.88;
+      color: var(--dark);
+    }
+    .num-sup { font-size: 0.55em; color: rgba(12,12,12,0.45); vertical-align: super; }
+
+    .num-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600;
+      font-size: 0.78rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(12,12,12,0.55);
+      margin-top: 0.5rem;
+    }
+
+    /* ─── HERITAGE ──────────────────────────────── */
+    .heritage-wrap {
+      padding: 9rem 3rem;
+      max-width: 1400px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7rem;
+      align-items: center;
+    }
+
+    .heritage-body {
+      font-size: 0.97rem;
+      line-height: 1.8;
+      color: var(--muted);
+      margin-top: 2.25rem;
+      font-weight: 300;
+    }
+    .heritage-body + .heritage-body { margin-top: 1rem; }
+
+    .heritage-visual {
+      position: relative;
+    }
+    .heritage-img {
+      width: 100%;
+      aspect-ratio: 4 / 5;
+      object-fit: cover;
+      display: block;
+      filter: grayscale(20%);
+    }
+
+    /* badge */
+    .heritage-badge {
+      position: absolute;
+      top: -2.25rem;
+      right: -2.25rem;
+      width: 116px;
+      height: 116px;
+      background: var(--orange);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .badge-since {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.6rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: rgba(12,12,12,0.55);
+    }
+    .badge-year {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2.6rem;
+      color: var(--dark);
+      line-height: 1;
+    }
+
+    /* thin vertical line decoration */
+    .heritage-visual::before {
+      content: '';
+      position: absolute;
+      left: -2rem;
+      top: 3rem;
+      bottom: 3rem;
+      width: 1px;
+      background: linear-gradient(to bottom, transparent, var(--orange), transparent);
+    }
+
+    /* ─── LOCATIONS ─────────────────────────────── */
+    .locations-wrap {
+      padding: 0 3rem 9rem;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .locations-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      margin-top: 3.5rem;
+    }
+
+    .loc {
+      background: var(--surface);
+      padding: 1.75rem 1.5rem;
+      transition: background 0.2s;
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+    }
+    .loc:hover { background: var(--elevated); }
+    .loc:hover .loc-dot { background: var(--orange); }
+
+    .loc-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #3A3A3A;
+      transition: background 0.2s;
+    }
+
+    .loc-name {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--text);
+    }
+
+    .loc-region {
+      font-size: 0.73rem;
+      color: rgba(240,237,232,0.3);
+      font-weight: 300;
+    }
+
+    /* ─── CTA ───────────────────────────────────── */
+    .cta-wrap {
+      position: relative;
+      overflow: hidden;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 9rem 3rem;
+    }
+
+    /* giant watermark */
+    .cta-wrap::before {
+      content: 'BECKER';
+      position: absolute;
+      right: -0.5rem;
+      top: 50%;
+      transform: translateY(-50%);
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 22vw;
+      color: rgba(232,85,0,0.04);
+      line-height: 1;
+      pointer-events: none;
+      user-select: none;
+      white-space: nowrap;
+    }
+
+    .cta-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 5rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .cta-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(3.5rem, 7vw, 7.5rem);
+      line-height: 0.88;
+      color: var(--text);
+    }
+    .cta-title .accent { color: var(--orange); }
+
+    .cta-contact {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-top: 1.5rem;
+      font-weight: 300;
+      letter-spacing: 0.02em;
+    }
+
+    .cta-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      flex-shrink: 0;
+    }
+
+    /* ─── FOOTER ────────────────────────────────── */
+    footer {
+      background: #0A0A0A;
+      border-top: 1px solid var(--border);
+      padding: 4.5rem 3rem 2.5rem;
+    }
+
+    .footer-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .footer-top {
+      display: grid;
+      grid-template-columns: 1.6fr 1fr 1fr 1fr;
+      gap: 4.5rem;
+      padding-bottom: 3.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .footer-logo {
+      height: 28px;
+      filter: invert(1);
+      opacity: 0.6;
+      display: block;
+      margin-bottom: 1.25rem;
+    }
+
+    .footer-tagline {
+      font-size: 0.82rem;
+      line-height: 1.7;
+      color: rgba(240,237,232,0.3);
+      font-weight: 300;
+    }
+
+    .footer-col-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 0.68rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: rgba(240,237,232,0.3);
+      margin-bottom: 1.25rem;
+    }
+
+    .footer-links { display: flex; flex-direction: column; gap: 0.7rem; }
+    .footer-links a {
+      font-size: 0.85rem;
+      color: rgba(240,237,232,0.45);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .footer-links a:hover { color: var(--orange); }
+
+    .footer-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 2.5rem;
+      gap: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .footer-copy {
+      font-size: 0.73rem;
+      color: rgba(240,237,232,0.2);
+    }
+
+    .footer-legal { display: flex; gap: 2rem; }
+    .footer-legal a {
+      font-size: 0.73rem;
+      color: rgba(240,237,232,0.2);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .footer-legal a:hover { color: rgba(232,85,0,0.6); }
+
+    /* ─── SCROLL REVEAL ─────────────────────────── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(36px);
+      transition: opacity 0.75s ease, transform 0.75s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ─── KEYFRAMES ─────────────────────────────── */
+    @keyframes fadeUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ─── ARROW SVG shorthand ───────────────────── */
+    .arrow-icon {
+      width: 15px;
+      height: 15px;
+      flex-shrink: 0;
+    }
+
+    /* ─── RESPONSIVE ────────────────────────────── */
+    @media (max-width: 900px) {
+      nav { padding: 0 1.5rem; }
+      .nav-links { display: none; }
+      .hero-content { padding: 0 1.5rem 3rem; }
+      .hero-title { font-size: 4.5rem; }
+      .stats-bar { grid-template-columns: repeat(2, 1fr); }
+      .services-grid { grid-template-columns: 1fr; grid-template-rows: auto; }
+      .svc.featured { grid-row: span 1; min-height: 400px; }
+      .svc { min-height: 280px; }
+      .numbers-inner { grid-template-columns: repeat(2, 1fr); }
+      .heritage-wrap { grid-template-columns: 1fr; gap: 3rem; padding: 5rem 1.5rem; }
+      .locations-wrap { padding: 0 1.5rem 5rem; }
+      .locations-grid { grid-template-columns: repeat(2, 1fr); }
+      .cta-inner { grid-template-columns: 1fr; gap: 2.5rem; }
+      .cta-wrap { padding: 5rem 1.5rem; }
+      .footer-top { grid-template-columns: 1fr 1fr; gap: 2.5rem; }
+      .wrap { padding: 0 1.5rem; }
+      .numbers-band { padding: 4rem 1.5rem; }
+      .services-header { padding: 0 1.5rem; }
+    }
+
+    @media (max-width: 520px) {
+      .hero-title { font-size: 3.5rem; }
+      .stats-bar { grid-template-columns: 1fr 1fr; }
+      .locations-grid { grid-template-columns: 1fr 1fr; }
+      .footer-top { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
 
-<!-- Nav -->
-<nav style="position:sticky;top:0;z-index:50;background:rgba(248,251,249,0.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(22,163,74,0.1);">
-  <div style="max-width:1100px;margin:0 auto;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:56px;">
-    <div style="display:flex;align-items:center;gap:10px;">
-      <div style="width:28px;height:28px;background:#f0fdf4;border:1px solid rgba(22,163,74,0.25);border-radius:6px;display:flex;align-items:center;justify-content:center;">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 3L21 20H3Z" stroke="#16a34a" stroke-width="1.5" stroke-linejoin="round"/></svg>
-      </div>
-      <span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:#16a34a;letter-spacing:0.04em;">Marienschlucht</span>
+  <!-- ── NAV ─────────────────────────────────────── -->
+  <nav>
+    <a href="#" class="nav-logo">
+      <img src="/assets/logo.jpg" alt="Paul Becker GmbH">
+    </a>
+    <div class="nav-links">
+      <a href="#">Dienstleistungen</a>
+      <a href="#">Service</a>
+      <a href="#">Standorte</a>
+      <a href="#">Über uns</a>
+      <a href="#">Karriere</a>
+      <a href="#" class="nav-cta">Direktanfrage</a>
     </div>
-    <div id="nav-links" style="display:flex;gap:28px;align-items:center;">
-      <a href="#system" class="nav-link">System</a>
-      <a href="#roadmap" class="nav-link">Roadmap</a>
-      <a href="#techstack" class="nav-link">Tech-Stack</a>
-      <a href="#architektur" class="nav-link">Architektur</a>
-      <a href="#future" class="nav-link">Zukunft</a>
-    </div>
-  </div>
-</nav>
+  </nav>
 
-<!-- ══ HERO ══ -->
-<header style="position:relative;overflow:hidden;background:#f8fbf9;padding:80px 0 72px;">
-  <!-- subtle bg radial -->
-  <div style="position:absolute;top:-160px;right:-160px;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(22,163,74,0.07) 0%,transparent 70%);pointer-events:none;"></div>
-  <div style="position:absolute;bottom:-100px;left:-100px;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(22,163,74,0.05) 0%,transparent 70%);pointer-events:none;"></div>
+  <!-- ── HERO ─────────────────────────────────────── -->
+  <div class="hero noise-layer">
+    <div class="hero-bg" id="heroBg"></div>
+    <div class="hero-overlay"></div>
+    <div class="hero-stripe"></div>
 
-  <div id="hero-content" style="max-width:1100px;margin:0 auto;padding:0 24px;display:flex;align-items:center;gap:64px;justify-content:space-between;">
-
-    <!-- Left: text -->
-    <div style="flex:1;min-width:0;">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:28px;">
-        <span class="badge"><span class="signal-dot"></span>MVP · 10-Tage-Sprint</span>
-        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#b3c9ba;letter-spacing:0.06em;">v1.0.0-alpha</span>
-      </div>
-      <h1 style="font-size:clamp(40px,5.5vw,76px);font-weight:700;line-height:1.05;letter-spacing:-0.04em;color:#0c1912;margin-bottom:10px;">Ampelsystem</h1>
-      <h1 style="font-size:clamp(40px,5.5vw,76px);font-weight:700;line-height:1.05;letter-spacing:-0.04em;margin-bottom:28px;">
-        <span style="background:linear-gradient(130deg,#16a34a 0%,#22c55e 55%,#4ade80 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Marienschlucht</span>
+    <div class="hero-content">
+      <div class="hero-eyebrow">Seit 1926 · 100 Jahre Tradition · Deutschlandweit</div>
+      <h1 class="hero-title">
+        Meister<br>werke<br><span class="accent">in Orange.</span>
       </h1>
-      <p style="font-size:17px;line-height:1.75;color:#3d6849;max-width:480px;margin-bottom:36px;">
-        Echtzeit-Monitoring für die Marienschlucht. Sensordaten und
-        Wetter-APIs ergeben ein klares Ampel-Signal —
-        vollautomatisch, ausfallsicher, in 10 Tagen.
-      </p>
-      <div style="display:flex;gap:12px;flex-wrap:wrap;">
-        <a href="#roadmap" class="btn-primary">
-          Roadmap ansehen
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div class="hero-bottom">
+        <p class="hero-desc">Gerüstbau, Arbeitsbühnen, Stapler und Containerdienst — zuverlässig und pünktlich, wann und wo Sie uns brauchen.</p>
+        <a href="#" class="btn-orange">
+          Jetzt anfragen
+          <svg class="arrow-icon" viewBox="0 0 15 15" fill="none"><path d="M2 7.5h11M13 7.5l-4-4M13 7.5l-4 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
         </a>
-        <a href="#architektur" class="btn-ghost">Architektur</a>
+        <a href="#" class="btn-ghost">
+          Standorte
+          <svg class="arrow-icon" viewBox="0 0 15 15" fill="none"><path d="M2 7.5h11M13 7.5l-4-4M13 7.5l-4 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        </a>
       </div>
-    </div>
-
-    <!-- Right: Weather animation -->
-    <div id="weather-wrap">
-      <!-- Sky -->
-      <div id="weather-sky"></div>
-
-      <!-- ── Scene: SUN ── -->
-      <div class="w-scene" id="scene-sun" style="opacity:1;">
-        <div class="sun-glow"></div>
-        <div class="sun-core"></div>
-        <!-- Rays SVG -->
-        <div class="sun-rays" style="position:absolute;top:47px;right:77px;width:96px;height:96px;animation:spin-rays 18s linear infinite;">
-          <svg viewBox="0 0 96 96" width="96" height="96">
-            <g stroke="rgba(255,210,50,0.65)" stroke-width="3" stroke-linecap="round">
-              <line x1="48" y1="4"  x2="48" y2="18"/>
-              <line x1="48" y1="4"  x2="48" y2="18" transform="rotate(45 48 48)"/>
-              <line x1="48" y1="4"  x2="48" y2="18" transform="rotate(90 48 48)"/>
-              <line x1="48" y1="4"  x2="48" y2="18" transform="rotate(135 48 48)"/>
-              <line x1="48" y1="4"  x2="48" y2="18" transform="rotate(180 48 48)"/>
-              <line x1="48" y1="4"  x2="48" y2="18" transform="rotate(225 48 48)"/>
-              <line x1="48" y1="4"  x2="48" y2="18" transform="rotate(270 48 48)"/>
-              <line x1="48" y1="4"  x2="48" y2="18" transform="rotate(315 48 48)"/>
-            </g>
-          </svg>
-        </div>
-        <!-- Small drifting cloud -->
-        <div class="mini-cloud" style="top:90px;left:40px;animation-duration:7s;">
-          <div class="cloud-body" style="width:80px;height:28px;opacity:0.85;">
-            <div class="cloud-bump" style="width:36px;height:36px;top:-18px;left:10px;"></div>
-            <div class="cloud-bump" style="width:28px;height:28px;top:-13px;right:12px;"></div>
-          </div>
-        </div>
-        <!-- Second tiny cloud -->
-        <div class="mini-cloud" style="top:150px;left:20px;animation-duration:9s;animation-delay:-3s;">
-          <div class="cloud-body" style="width:55px;height:20px;opacity:0.6;">
-            <div class="cloud-bump" style="width:26px;height:26px;top:-13px;left:8px;"></div>
-            <div class="cloud-bump" style="width:20px;height:20px;top:-10px;right:8px;"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ── Scene: CLOUD ── -->
-      <div class="w-scene" id="scene-cloud" style="opacity:0;">
-        <!-- Main large cloud -->
-        <div class="mini-cloud" style="top:50px;left:50px;animation-duration:8s;">
-          <div class="cloud-body" style="width:160px;height:52px;background:#e2ecf4;">
-            <div class="cloud-bump" style="width:72px;height:72px;top:-36px;left:18px;background:#e2ecf4;"></div>
-            <div class="cloud-bump" style="width:56px;height:56px;top:-28px;right:22px;background:#e2ecf4;"></div>
-            <div class="cloud-bump" style="width:44px;height:44px;top:-20px;left:60px;background:#dce8f0;"></div>
-          </div>
-        </div>
-        <!-- Secondary cloud -->
-        <div class="mini-cloud" style="top:140px;right:30px;animation-duration:11s;animation-delay:-4s;">
-          <div class="cloud-body" style="width:110px;height:36px;background:#d4e2ec;">
-            <div class="cloud-bump" style="width:48px;height:48px;top:-24px;left:14px;background:#d4e2ec;"></div>
-            <div class="cloud-bump" style="width:38px;height:38px;top:-18px;right:16px;background:#cddcea;"></div>
-          </div>
-        </div>
-        <!-- Third small cloud -->
-        <div class="mini-cloud" style="top:80px;right:80px;animation-duration:6s;animation-delay:-2s;">
-          <div class="cloud-body" style="width:70px;height:24px;background:#dce8f0;opacity:0.75;">
-            <div class="cloud-bump" style="width:32px;height:32px;top:-16px;left:10px;background:#dce8f0;"></div>
-            <div class="cloud-bump" style="width:24px;height:24px;top:-12px;right:10px;background:#d4e2ec;"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ── Scene: RAIN ── -->
-      <div class="w-scene" id="scene-rain" style="opacity:0;">
-        <!-- Dark rain cloud -->
-        <div style="position:absolute;top:20px;left:50%;transform:translateX(-50%);">
-          <div class="rain-cloud-body" style="width:280px;height:70px;">
-            <div class="rain-cloud-bump" style="width:90px;height:90px;top:-45px;left:20px;background:#374151;"></div>
-            <div class="rain-cloud-bump" style="width:110px;height:110px;top:-60px;left:80px;background:#2d3748;"></div>
-            <div class="rain-cloud-bump" style="width:80px;height:80px;top:-40px;right:18px;background:#374151;"></div>
-            <div class="rain-cloud-bump" style="width:65px;height:65px;top:-30px;left:160px;background:#3d4a5c;"></div>
-          </div>
-        </div>
-        <!-- Raindrops -->
-        <div style="position:absolute;inset:0;overflow:hidden;">
-          <div class="raindrop" style="height:18px;left:30px; animation-duration:0.75s;animation-delay:-0.1s;"></div>
-          <div class="raindrop" style="height:22px;left:55px; animation-duration:0.9s; animation-delay:-0.4s;"></div>
-          <div class="raindrop" style="height:16px;left:80px; animation-duration:0.7s; animation-delay:-0.7s;"></div>
-          <div class="raindrop" style="height:20px;left:105px;animation-duration:0.85s;animation-delay:-0.2s;"></div>
-          <div class="raindrop" style="height:18px;left:130px;animation-duration:0.78s;animation-delay:-0.55s;"></div>
-          <div class="raindrop" style="height:24px;left:155px;animation-duration:0.92s;animation-delay:-0.15s;"></div>
-          <div class="raindrop" style="height:17px;left:180px;animation-duration:0.72s;animation-delay:-0.8s;"></div>
-          <div class="raindrop" style="height:21px;left:205px;animation-duration:0.88s;animation-delay:-0.35s;"></div>
-          <div class="raindrop" style="height:19px;left:230px;animation-duration:0.8s; animation-delay:-0.6s;"></div>
-          <div class="raindrop" style="height:16px;left:255px;animation-duration:0.68s;animation-delay:-0.25s;"></div>
-          <div class="raindrop" style="height:22px;left:280px;animation-duration:0.95s;animation-delay:-0.45s;"></div>
-          <div class="raindrop" style="height:18px;left:305px;animation-duration:0.76s;animation-delay:-0.7s;"></div>
-          <div class="raindrop" style="height:20px;left:330px;animation-duration:0.83s;animation-delay:-0.12s;"></div>
-          <div class="raindrop" style="height:15px;left:355px;animation-duration:0.71s;animation-delay:-0.5s;"></div>
-          <div class="raindrop" style="height:23px;left:380px;animation-duration:0.9s; animation-delay:-0.3s;"></div>
-          <div class="raindrop" style="height:17px;left:42px; animation-duration:0.77s;animation-delay:-0.9s;"></div>
-          <div class="raindrop" style="height:20px;left:92px; animation-duration:0.86s;animation-delay:-0.65s;"></div>
-          <div class="raindrop" style="height:18px;left:142px;animation-duration:0.74s;animation-delay:-0.38s;"></div>
-          <div class="raindrop" style="height:21px;left:192px;animation-duration:0.91s;animation-delay:-0.82s;"></div>
-          <div class="raindrop" style="height:16px;left:242px;animation-duration:0.69s;animation-delay:-0.18s;"></div>
-          <div class="raindrop" style="height:19px;left:292px;animation-duration:0.82s;animation-delay:-0.55s;"></div>
-          <div class="raindrop" style="height:22px;left:342px;animation-duration:0.94s;animation-delay:-0.72s;"></div>
-          <div class="raindrop" style="height:17px;left:400px;animation-duration:0.73s;animation-delay:-0.28s;"></div>
-          <div class="raindrop" style="height:20px;left:420px;animation-duration:0.87s;animation-delay:-0.6s;"></div>
-          <div class="raindrop" style="height:18px;left:440px;animation-duration:0.79s;animation-delay:-0.44s;"></div>
-        </div>
-      </div>
-
-      <!-- Ground silhouette -->
-      <div id="weather-ground">
-        <svg viewBox="0 0 460 80" width="460" height="80" preserveAspectRatio="none">
-          <path d="M0 50 Q40 22 90 38 Q140 54 190 30 Q240 6 290 32 Q340 58 390 40 Q425 26 460 38 L460 80 L0 80 Z" fill="#15803d"/>
-          <path d="M0 62 Q50 46 100 55 Q150 64 200 48 Q250 32 300 50 Q350 68 400 54 Q435 44 460 50 L460 80 L0 80 Z" fill="#166534" opacity="0.7"/>
-        </svg>
-      </div>
-
-      <!-- Traffic light -->
-      <div id="scene-tl">
-        <div class="tl-housing">
-          <div class="tl-light" id="tl-red"></div>
-          <div class="tl-light" id="tl-yellow"></div>
-          <div class="tl-light" id="tl-green"></div>
-        </div>
-        <div class="tl-pole"></div>
-        <div class="tl-base"></div>
-      </div>
-
-      <!-- Status label -->
-      <div id="weather-label-wrap">
-        <div id="weather-label">Zugang freigegeben</div>
-      </div>
-
-      <!-- Slider dots -->
-      <div id="slider-dots">
-        <button class="s-dot active" onclick="weatherGoTo(0)" aria-label="Sonne"></button>
-        <button class="s-dot" onclick="weatherGoTo(1)" aria-label="Wolke"></button>
-        <button class="s-dot" onclick="weatherGoTo(2)" aria-label="Regen"></button>
-      </div>
-
-      <!-- Progress bar -->
-      <div id="progress-bar"></div>
-    </div>
-
-  </div>
-</header>
-
-<!-- Stats strip -->
-<section style="border-top:1px solid rgba(22,163,74,0.1);border-bottom:1px solid rgba(22,163,74,0.1);background:#f0f7f3;">
-  <div id="stats-grid" style="max-width:1100px;margin:0 auto;padding:0 24px;display:grid;grid-template-columns:repeat(4,1fr);">
-    <div style="padding:26px 24px;border-right:1px solid rgba(22,163,74,0.1);">
-      <div style="font-family:'JetBrains Mono',monospace;font-size:30px;font-weight:600;color:#16a34a;letter-spacing:-0.03em;">10</div>
-      <div style="font-size:13px;color:#7a9882;margin-top:4px;line-height:1.4;">Tage bis zur<br/>Live-Demo</div>
-    </div>
-    <div style="padding:26px 24px;border-right:1px solid rgba(22,163,74,0.1);">
-      <div style="font-family:'JetBrains Mono',monospace;font-size:30px;font-weight:600;color:#16a34a;letter-spacing:-0.03em;">3</div>
-      <div style="font-size:13px;color:#7a9882;margin-top:4px;line-height:1.4;">Datenquellen<br/>integriert</div>
-    </div>
-    <div style="padding:26px 24px;border-right:1px solid rgba(22,163,74,0.1);">
-      <div style="font-family:'JetBrains Mono',monospace;font-size:30px;font-weight:600;color:#16a34a;letter-spacing:-0.03em;">24/7</div>
-      <div style="font-size:13px;color:#7a9882;margin-top:4px;line-height:1.4;">Automatisches<br/>Monitoring</div>
-    </div>
-    <div style="padding:26px 24px;">
-      <div style="font-family:'JetBrains Mono',monospace;font-size:30px;font-weight:600;color:#16a34a;letter-spacing:-0.03em;">&lt;60s</div>
-      <div style="font-size:13px;color:#7a9882;margin-top:4px;line-height:1.4;">Alert-<br/>Reaktionszeit</div>
     </div>
   </div>
-</section>
 
-<!-- System states -->
-<section id="system" style="padding:96px 0;background:#fff;">
-  <div style="max-width:1100px;margin:0 auto;padding:0 24px;">
-    <div style="margin-bottom:56px;" class="fade-up">
-      <span class="badge" style="margin-bottom:16px;display:inline-flex;">01 — System</span>
-      <h2 style="font-size:clamp(28px,4vw,48px);font-weight:700;color:#0c1912;line-height:1.1;margin-bottom:18px;">Was ist das Ampelsystem?</h2>
-      <p style="font-size:16px;line-height:1.8;color:#3d6849;max-width:600px;">Keine komplexe KI — nur verlässliche Daten, klare Schwellenwerte und ein Signal, das jeder versteht. Automatisch, rund um die Uhr.</p>
+  <!-- ── STATS BAR ──────────────────────────────────── -->
+  <div class="stats-bar">
+    <div class="stat-item">
+      <div class="stat-num">100+</div>
+      <div class="stat-label">Jahre Erfahrung</div>
     </div>
-    <div id="system-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:18px;" class="fade-up">
-
-      <div class="card-mid" style="padding:30px;position:relative;overflow:hidden;">
-        <div style="position:absolute;top:-30px;right:-30px;width:110px;height:110px;border-radius:50%;background:radial-gradient(circle,rgba(22,163,74,0.07),transparent 70%);pointer-events:none;"></div>
-        <div style="width:46px;height:46px;border-radius:11px;background:#f0fdf4;border:1px solid rgba(22,163,74,0.22);display:flex;align-items:center;justify-content:center;margin-bottom:18px;">
-          <div style="width:18px;height:18px;border-radius:50%;background:#16a34a;box-shadow:0 0 10px rgba(22,163,74,0.5);"></div>
-        </div>
-        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#16a34a;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:7px;">GRÜN — Freigabe</div>
-        <div style="font-size:15px;font-weight:600;color:#0c1912;margin-bottom:8px;">Alle Werte im Normalbereich</div>
-        <p style="font-size:13px;line-height:1.7;color:#7a9882;">Sensordaten und Wetterlage unterschreiten alle Schwellenwerte. Zugang unbeschränkt möglich.</p>
-      </div>
-
-      <div class="card-mid" style="padding:30px;position:relative;overflow:hidden;">
-        <div style="position:absolute;top:-30px;right:-30px;width:110px;height:110px;border-radius:50%;background:radial-gradient(circle,rgba(217,119,6,0.07),transparent 70%);pointer-events:none;"></div>
-        <div style="width:46px;height:46px;border-radius:11px;background:rgba(254,243,199,0.8);border:1px solid rgba(217,119,6,0.2);display:flex;align-items:center;justify-content:center;margin-bottom:18px;">
-          <div style="width:18px;height:18px;border-radius:50%;background:#d97706;box-shadow:0 0 10px rgba(217,119,6,0.4);"></div>
-        </div>
-        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#d97706;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:7px;">GELB — Warnung</div>
-        <div style="font-size:15px;font-weight:600;color:#0c1912;margin-bottom:8px;">Schwellenwert in Sichtweite</div>
-        <p style="font-size:13px;line-height:1.7;color:#7a9882;">Mindestens ein Parameter nähert sich dem kritischen Bereich. Alerts werden vorbereitet.</p>
-      </div>
-
-      <div class="card-mid" style="padding:30px;position:relative;overflow:hidden;">
-        <div style="position:absolute;top:-30px;right:-30px;width:110px;height:110px;border-radius:50%;background:radial-gradient(circle,rgba(220,38,38,0.07),transparent 70%);pointer-events:none;"></div>
-        <div style="width:46px;height:46px;border-radius:11px;background:rgba(254,226,226,0.8);border:1px solid rgba(220,38,38,0.2);display:flex;align-items:center;justify-content:center;margin-bottom:18px;">
-          <div style="width:18px;height:18px;border-radius:50%;background:#dc2626;box-shadow:0 0 10px rgba(220,38,38,0.4);"></div>
-        </div>
-        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#dc2626;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:7px;">ROT — Sperrung</div>
-        <div style="font-size:15px;font-weight:600;color:#0c1912;margin-bottom:8px;">Kritischer Wert überschritten</div>
-        <p style="font-size:13px;line-height:1.7;color:#7a9882;">System löst automatisch Status-Mail und Messenger-Alert aus. Leitstellen-Dashboard zeigt Rot.</p>
-      </div>
-
+    <div class="stat-item">
+      <div class="stat-num">500+</div>
+      <div class="stat-label">Mitarbeiter</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">10</div>
+      <div class="stat-label">Standorte</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">4</div>
+      <div class="stat-label">Fachbereiche</div>
     </div>
   </div>
-</section>
 
-<!-- Architecture -->
-<section id="architektur" style="padding:96px 0;background:#f0f7f3;">
-  <div style="max-width:1100px;margin:0 auto;padding:0 24px;">
-    <div style="margin-bottom:56px;" class="fade-up">
-      <span class="badge" style="margin-bottom:16px;display:inline-flex;">02 — Architektur</span>
-      <h2 style="font-size:clamp(28px,4vw,48px);font-weight:700;color:#0c1912;line-height:1.1;margin-bottom:18px;">Datenkette von Sensor bis Signal</h2>
-      <p style="font-size:16px;line-height:1.8;color:#3d6849;max-width:560px;">Jedes Datenpaket läuft durch eine definierte Pipeline. Keine Black Box — jeder Schritt ist nachvollziehbar.</p>
+  <!-- ── SERVICES ───────────────────────────────────── -->
+  <div class="services-wrap">
+    <div class="services-header reveal">
+      <div class="section-eyebrow">Dienstleistungen</div>
+      <h2 class="section-title">Was wir<br>für Sie tun.</h2>
     </div>
 
-    <div class="fade-up" style="display:grid;grid-template-columns:1fr auto 1fr auto 1fr auto 1fr auto 1fr;gap:0;align-items:center;overflow-x:auto;padding-bottom:8px;">
+    <div class="services-grid reveal" style="transition-delay: 0.15s">
 
-      <div class="card-high" style="padding:22px 14px;text-align:center;">
-        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#b3c9ba;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:10px;">Quelle</div>
-        <div style="width:40px;height:40px;border-radius:10px;background:#f0fdf4;border:1px solid rgba(22,163,74,0.2);margin:0 auto 10px;display:flex;align-items:center;justify-content:center;">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="#16a34a" stroke-width="1.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke="#16a34a" stroke-width="1.5" stroke-linecap="round"/></svg>
-        </div>
-        <div style="font-size:13px;font-weight:600;color:#0c1912;margin-bottom:4px;">Sensor + API</div>
-        <div style="font-size:11px;color:#7a9882;line-height:1.5;">Pegel, Wetter,<br/>Langnese-Daten</div>
-      </div>
-      <div style="padding:0 6px;display:flex;align-items:center;">
-        <svg width="20" height="10" viewBox="0 0 20 10" fill="none"><path d="M0 5H16M16 5L12 1M16 5L12 9" stroke="rgba(22,163,74,0.4)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </div>
-
-      <div class="card-high" style="padding:22px 14px;text-align:center;">
-        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#b3c9ba;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:10px;">Pipeline</div>
-        <div style="width:40px;height:40px;border-radius:10px;background:#f0fdf4;border:1px solid rgba(22,163,74,0.2);margin:0 auto 10px;display:flex;align-items:center;justify-content:center;">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h10" stroke="#16a34a" stroke-width="1.5" stroke-linecap="round"/></svg>
-        </div>
-        <div style="font-size:13px;font-weight:600;color:#0c1912;margin-bottom:4px;">n8n Workflow</div>
-        <div style="font-size:11px;color:#7a9882;line-height:1.5;">Abruf, Mapping,<br/>Fehlerbehandlung</div>
-      </div>
-      <div style="padding:0 6px;display:flex;align-items:center;">
-        <svg width="20" height="10" viewBox="0 0 20 10" fill="none"><path d="M0 5H16M16 5L12 1M16 5L12 9" stroke="rgba(22,163,74,0.4)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </div>
-
-      <div class="card-high" style="padding:22px 14px;text-align:center;">
-        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#b3c9ba;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:10px;">Persistenz</div>
-        <div style="width:40px;height:40px;border-radius:10px;background:#f0fdf4;border:1px solid rgba(22,163,74,0.2);margin:0 auto 10px;display:flex;align-items:center;justify-content:center;">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><ellipse cx="12" cy="6" rx="8" ry="3" stroke="#16a34a" stroke-width="1.5"/><path d="M4 6v6c0 1.657 3.582 3 8 3s8-1.343 8-3V6" stroke="#16a34a" stroke-width="1.5"/><path d="M4 12v6c0 1.657 3.582 3 8 3s8-1.343 8-3v-6" stroke="#16a34a" stroke-width="1.5"/></svg>
-        </div>
-        <div style="font-size:13px;font-weight:600;color:#0c1912;margin-bottom:4px;">Datenbank</div>
-        <div style="font-size:11px;color:#7a9882;line-height:1.5;">Rohdaten,<br/>Fallback-Logik</div>
-      </div>
-      <div style="padding:0 6px;display:flex;align-items:center;">
-        <svg width="20" height="10" viewBox="0 0 20 10" fill="none"><path d="M0 5H16M16 5L12 1M16 5L12 9" stroke="rgba(22,163,74,0.4)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </div>
-
-      <div class="card-high" style="padding:22px 14px;text-align:center;">
-        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#b3c9ba;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:10px;">Analyse</div>
-        <div style="width:40px;height:40px;border-radius:10px;background:#f0fdf4;border:1px solid rgba(22,163,74,0.2);margin:0 auto 10px;display:flex;align-items:center;justify-content:center;">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 17L8 12L13 15L21 7" stroke="#16a34a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </div>
-        <div style="font-size:13px;font-weight:600;color:#0c1912;margin-bottom:4px;">Heuristik</div>
-        <div style="font-size:11px;color:#7a9882;line-height:1.5;">Schwellenwerte,<br/>Sensor-Check</div>
-      </div>
-      <div style="padding:0 6px;display:flex;align-items:center;">
-        <svg width="20" height="10" viewBox="0 0 20 10" fill="none"><path d="M0 5H16M16 5L12 1M16 5L12 9" stroke="rgba(22,163,74,0.4)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </div>
-
-      <div class="card-high" style="padding:22px 14px;text-align:center;">
-        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#b3c9ba;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:10px;">Output</div>
-        <div style="width:40px;height:40px;border-radius:10px;background:#f0fdf4;border:1px solid rgba(22,163,74,0.2);margin:0 auto 10px;display:flex;align-items:center;justify-content:center;">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 17h5l-1.405-1.405C18.206 14.21 18 13.116 18 12V8A6 6 0 006 8v4c0 1.116-.206 2.21-.595 3.205L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" stroke="#16a34a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </div>
-        <div style="font-size:13px;font-weight:600;color:#0c1912;margin-bottom:4px;">Alert + Dashboard</div>
-        <div style="font-size:11px;color:#7a9882;line-height:1.5;">Mail, Messenger,<br/>Grafana</div>
-      </div>
-    </div>
-
-    <div style="margin-top:20px;padding:14px 18px;border-radius:10px;background:rgba(217,119,6,0.05);border:1px solid rgba(217,119,6,0.15);display:flex;align-items:flex-start;gap:10px;" class="fade-up">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;margin-top:1px;"><path d="M12 9v4M12 17h.01M12 3L2 21h20L12 3z" stroke="#d97706" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      <span style="font-size:13px;color:#92680a;line-height:1.65;"><strong style="color:#b45309;font-weight:600;">Ausfallsicherheit:</strong> Jede Schnittstelle hat definierte Fallbacks. Timeout, Disconnect und Datenverlust werden aktiv überwacht — kein stilles Scheitern.</span>
-    </div>
-  </div>
-</section>
-
-<!-- Roadmap -->
-<section id="roadmap" style="padding:96px 0;background:#fff;">
-  <div style="max-width:1100px;margin:0 auto;padding:0 24px;">
-    <div style="margin-bottom:56px;" class="fade-up">
-      <span class="badge" style="margin-bottom:16px;display:inline-flex;">03 — Roadmap</span>
-      <h2 style="font-size:clamp(28px,4vw,48px);font-weight:700;color:#0c1912;line-height:1.1;margin-bottom:18px;">10-Tage-Sprint</h2>
-      <p style="font-size:16px;line-height:1.8;color:#3d6849;max-width:580px;">Vom ersten API-Test bis zur Live-Demo vor dem Bürgermeister — jeder Tag hat einen klaren Fokus.</p>
-    </div>
-    <div id="roadmap-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start;" class="fade-up">
-
-      <div style="position:relative;">
-        <div class="timeline-line"></div>
-        <div style="display:flex;flex-direction:column;gap:20px;">
-          <div style="display:flex;gap:14px;align-items:flex-start;">
-            <div class="day-num">01</div>
-            <div class="card" style="flex:1;padding:16px 18px;">
-              <div style="font-size:14px;font-weight:600;color:#0c1912;margin-bottom:5px;">Schnittstellen Sync</div>
-              <p style="font-size:12px;line-height:1.65;color:#7a9882;">API-Doku-Check & Key-Beschaffung. Initialer Test-Call: Kommt ein Paket an?</p>
-            </div>
-          </div>
-          <div style="display:flex;gap:14px;align-items:flex-start;">
-            <div class="day-num">02</div>
-            <div class="card" style="flex:1;padding:16px 18px;">
-              <div style="font-size:14px;font-weight:600;color:#0c1912;margin-bottom:5px;">Daten-Pipeline (Ingest)</div>
-              <p style="font-size:12px;line-height:1.65;color:#7a9882;">n8n Workflow für Rohdaten-Abruf. Mapping der Felder, Schnittstellen-Schärfung.</p>
-            </div>
-          </div>
-          <div style="display:flex;gap:14px;align-items:flex-start;">
-            <div class="day-num">03</div>
-            <div class="card" style="flex:1;padding:16px 18px;">
-              <div style="font-size:14px;font-weight:600;color:#0c1912;margin-bottom:5px;">Datenbank & Persistence</div>
-              <p style="font-size:12px;line-height:1.65;color:#7a9882;">Speichern der Rohdaten. Fehlerbehandlung bei Timeout/Disconnect.</p>
-            </div>
-          </div>
-          <div style="display:flex;gap:14px;align-items:flex-start;">
-            <div class="day-num">04</div>
-            <div class="card" style="flex:1;padding:16px 18px;">
-              <div style="font-size:14px;font-weight:600;color:#0c1912;margin-bottom:5px;">Daten-Qualitäts-Check</div>
-              <p style="font-size:12px;line-height:1.65;color:#7a9882;">Abgleich Sensor vs. Wetter. Erster 24h-Dauerlauf-Test der APIs.</p>
-            </div>
-          </div>
-          <div style="display:flex;gap:14px;align-items:flex-start;">
-            <div class="day-num">05</div>
-            <div class="card" style="flex:1;padding:16px 18px;">
-              <div style="font-size:14px;font-weight:600;color:#0c1912;margin-bottom:5px;">Heuristik-Logik</div>
-              <p style="font-size:12px;line-height:1.65;color:#7a9882;">Harte Schwellenwerte (statt KI). Monitoring: Verlieren wir Pakete?</p>
-            </div>
-          </div>
+      <!-- 01 Gerüstbau — featured -->
+      <div class="svc featured">
+        <div class="svc-img" style="background: radial-gradient(ellipse at 30% 70%, #3d1a00 0%, #1a0e00 45%, #0f0f0f 100%)"></div>
+        <div class="svc-overlay"></div>
+        <div class="svc-content">
+          <div class="svc-num">01 / Gerüstbau</div>
+          <div class="svc-title">Gerüst­bau</div>
+          <div class="svc-desc">Fassadengerüste, Hängegerüste, Tribünen, Klettermastbühnen, Wetterschutzdächer und Systembrücken — maßgeschneidert für jeden Einsatz.</div>
+          <div class="svc-link">Mehr erfahren <svg class="arrow-icon" viewBox="0 0 15 15" fill="none"><path d="M2 7.5h11M13 7.5l-4-4M13 7.5l-4 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></div>
         </div>
       </div>
 
-      <div style="position:relative;">
-        <div class="timeline-line"></div>
-        <div style="display:flex;flex-direction:column;gap:20px;">
-          <div style="display:flex;gap:14px;align-items:flex-start;">
-            <div class="day-num">06</div>
-            <div class="card" style="flex:1;padding:16px 18px;">
-              <div style="font-size:14px;font-weight:600;color:#0c1912;margin-bottom:5px;">Analyse-Feinschliff</div>
-              <p style="font-size:12px;line-height:1.65;color:#7a9882;">Ampel-Logik auf Basis realer Messwerte kalibrieren.</p>
-            </div>
-          </div>
-          <div style="display:flex;gap:14px;align-items:flex-start;">
-            <div class="day-num">07</div>
-            <div class="card" style="flex:1;padding:16px 18px;">
-              <div style="font-size:14px;font-weight:600;color:#0c1912;margin-bottom:5px;">Reporting-Engine</div>
-              <p style="font-size:12px;line-height:1.65;color:#7a9882;">Status-Mail & Messenger-Alert bei Schwellenwert-Verletzung live schalten.</p>
-            </div>
-          </div>
-          <div style="display:flex;gap:14px;align-items:flex-start;">
-            <div class="day-num">08</div>
-            <div class="card" style="flex:1;padding:16px 18px;">
-              <div style="font-size:14px;font-weight:600;color:#0c1912;margin-bottom:5px;">Interne Leitstelle</div>
-              <p style="font-size:12px;line-height:1.65;color:#7a9882;">Dashboard für Fachanwender (Grafana / n8n). Echtzeit-Visualisierung.</p>
-            </div>
-          </div>
-          <div style="display:flex;gap:14px;align-items:flex-start;">
-            <div class="day-num">09</div>
-            <div class="card" style="flex:1;padding:16px 18px;">
-              <div style="font-size:14px;font-weight:600;color:#0c1912;margin-bottom:5px;">Stress-Test & Abnahme</div>
-              <p style="font-size:12px;line-height:1.65;color:#7a9882;">Simulation "Ausfall Sensor". Belastungstest der gesamten Pipeline.</p>
-            </div>
-          </div>
-          <div style="display:flex;gap:14px;align-items:flex-start;">
-            <div class="day-num" style="background:#f0fdf4;border-color:rgba(22,163,74,0.4);color:#16a34a;box-shadow:0 0 16px rgba(22,163,74,0.12),0 1px 4px rgba(0,0,0,0.05);">10</div>
-            <div class="card-mid" style="flex:1;padding:16px 18px;border-color:rgba(22,163,74,0.28);position:relative;overflow:hidden;">
-              <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(22,163,74,0.04),transparent 60%);pointer-events:none;"></div>
-              <div style="font-size:14px;font-weight:600;color:#16a34a;margin-bottom:5px;">Präsentation — Live-Demo</div>
-              <p style="font-size:12px;line-height:1.65;color:#7a9882;">Vorführung der Datenkette vor dem Bürgermeister. System läuft produktiv.</p>
-              <div style="margin-top:9px;display:inline-flex;align-items:center;gap:5px;font-family:'JetBrains Mono',monospace;font-size:10px;color:#16a34a;background:#f0fdf4;padding:3px 8px;border-radius:4px;border:1px solid rgba(22,163,74,0.22);">
-                <span class="signal-dot" style="width:6px;height:6px;"></span>Ziel erreicht
-              </div>
-            </div>
-          </div>
+      <!-- 02 Arbeitsbühnen -->
+      <div class="svc">
+        <div class="svc-img" style="background: radial-gradient(ellipse at 80% 20%, #2e1200 0%, #160b00 50%, #0d0d0d 100%)"></div>
+        <div class="svc-overlay"></div>
+        <div class="svc-content">
+          <div class="svc-num">02 / Arbeitsbühnen</div>
+          <div class="svc-title">Arbeits­bühnen</div>
+          <div class="svc-desc">8 Gerätetypen: LKW-montiert, Anhänger, Teleskop, Schere, Raupe und mehr.</div>
+          <div class="svc-link">Mehr erfahren <svg class="arrow-icon" viewBox="0 0 15 15" fill="none"><path d="M2 7.5h11M13 7.5l-4-4M13 7.5l-4 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></div>
+        </div>
+      </div>
+
+      <!-- 03 Stapler -->
+      <div class="svc">
+        <div class="svc-img" style="background: radial-gradient(ellipse at 20% 80%, #2a1000 0%, #140a00 50%, #0e0e0e 100%)"></div>
+        <div class="svc-overlay"></div>
+        <div class="svc-content">
+          <div class="svc-num">03 / Stapler</div>
+          <div class="svc-title">Stapler</div>
+          <div class="svc-desc">Starr- und Drehteleskop, Deichsel- und Mastgeräte für jeden Einsatzbereich.</div>
+          <div class="svc-link">Mehr erfahren <svg class="arrow-icon" viewBox="0 0 15 15" fill="none"><path d="M2 7.5h11M13 7.5l-4-4M13 7.5l-4 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></div>
+        </div>
+      </div>
+
+      <!-- 04 Containerdienst -->
+      <div class="svc">
+        <div class="svc-img" style="background: radial-gradient(ellipse at 60% 30%, #261000 0%, #120800 50%, #0c0c0c 100%)"></div>
+        <div class="svc-overlay"></div>
+        <div class="svc-content">
+          <div class="svc-num">04 / Containerdienst</div>
+          <div class="svc-title">Container­dienst</div>
+          <div class="svc-desc">Roll-off, stationäre, Press- und Umladbehälter sowie Schüttgutsäcke.</div>
+          <div class="svc-link">Mehr erfahren <svg class="arrow-icon" viewBox="0 0 15 15" fill="none"><path d="M2 7.5h11M13 7.5l-4-4M13 7.5l-4 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></div>
         </div>
       </div>
 
     </div>
   </div>
-</section>
 
-<!-- Tech Stack -->
-<section id="techstack" style="padding:96px 0;background:#f0f7f3;">
-  <div style="max-width:1100px;margin:0 auto;padding:0 24px;">
-    <div style="margin-bottom:56px;" class="fade-up">
-      <span class="badge" style="margin-bottom:16px;display:inline-flex;">04 — Tech-Stack</span>
-      <h2 style="font-size:clamp(28px,4vw,48px);font-weight:700;color:#0c1912;line-height:1.1;margin-bottom:18px;">Bewährte Komponenten,<br/>keine Experimente</h2>
-      <p style="font-size:16px;line-height:1.8;color:#3d6849;max-width:540px;">Open-Source-first. Jede Komponente produktionserprobt, keine Vendor-Lock-ins.</p>
+  <!-- ── NUMBERS ─────────────────────────────────────── -->
+  <div class="numbers-band noise-layer">
+    <div class="numbers-inner">
+      <div class="num-item reveal">
+        <div class="num-val">100<span class="num-sup">+</span></div>
+        <div class="num-label">Jahre Familienunternehmen</div>
+      </div>
+      <div class="num-item reveal" style="transition-delay: 0.1s">
+        <div class="num-val">500<span class="num-sup">+</span></div>
+        <div class="num-label">Qualifizierte Mitarbeiter</div>
+      </div>
+      <div class="num-item reveal" style="transition-delay: 0.2s">
+        <div class="num-val">10</div>
+        <div class="num-label">Standorte bundesweit</div>
+      </div>
+      <div class="num-item reveal" style="transition-delay: 0.3s">
+        <div class="num-val">1926</div>
+        <div class="num-label">Gründungsjahr</div>
+      </div>
     </div>
-    <div id="tech-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;" class="fade-up">
+  </div>
 
-      <div class="card-mid" style="padding:26px;display:flex;gap:18px;align-items:flex-start;">
-        <div style="width:46px;height:46px;border-radius:11px;background:rgba(254,243,199,0.7);border:1px solid rgba(217,119,6,0.18);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M8 6a2 2 0 100-4 2 2 0 000 4zM16 22a2 2 0 100-4 2 2 0 000 4zM8 6v6M16 12v4M8 12h8" stroke="#d97706" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </div>
+  <!-- ── HERITAGE ────────────────────────────────────── -->
+  <div class="heritage-wrap">
+    <div class="reveal">
+      <div class="section-eyebrow">Über uns</div>
+      <h2 class="section-title">Mit Herz<br>und Seele<br>seit 1926.</h2>
+      <p class="heritage-body">Als Familienunternehmen in der vierten Generation steht Paul Becker GmbH für Verlässlichkeit, persönliche Beratung und maßgeschneiderte Lösungen. Was 1926 als kleiner Betrieb begann, ist heute ein bundesweit tätiger Partner mit über 500 Mitarbeitern an 10 Standorten.</p>
+      <p class="heritage-body">Unser Anspruch: punktgenaue Verfügbarkeit, höchste Sicherheitsstandards und der persönliche Kontakt, der uns von anonymen Anbietern unterscheidet. Meisterwerke entstehen nicht durch Zufall — sondern durch Erfahrung, Leidenschaft und das richtige Team.</p>
+      <a href="#" class="btn-orange" style="margin-top: 2.5rem; display: inline-flex;">
+        Unsere Geschichte
+        <svg class="arrow-icon" viewBox="0 0 15 15" fill="none"><path d="M2 7.5h11M13 7.5l-4-4M13 7.5l-4 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+      </a>
+    </div>
+
+    <div class="heritage-visual reveal" style="transition-delay: 0.2s">
+      <img
+        class="heritage-img"
+        src="/assets/hero.jpg"
+        alt="Paul Becker GmbH — Bundesweit für Sie da"
+      >
+      <div class="heritage-badge">
+        <span class="badge-since">Seit</span>
+        <span class="badge-year">1926</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── LOCATIONS ──────────────────────────────────── -->
+  <div class="locations-wrap">
+    <div class="reveal">
+      <div class="section-eyebrow">Standorte</div>
+      <h2 class="section-title">Bundesweit<br>für Sie da.</h2>
+    </div>
+
+    <div class="locations-grid reveal" style="transition-delay: 0.1s">
+      <div class="loc"><div class="loc-dot"></div><div class="loc-name">Berlin</div><div class="loc-region">Brandenburg</div></div>
+      <div class="loc"><div class="loc-dot"></div><div class="loc-name">Denzlingen</div><div class="loc-region">Baden-Württemberg</div></div>
+      <div class="loc"><div class="loc-dot"></div><div class="loc-name">Freiburg</div><div class="loc-region">Baden-Württemberg</div></div>
+      <div class="loc"><div class="loc-dot"></div><div class="loc-name">Karlsruhe</div><div class="loc-region">Baden-Württemberg</div></div>
+      <div class="loc"><div class="loc-dot"></div><div class="loc-name">Leipzig</div><div class="loc-region">Sachsen</div></div>
+      <div class="loc"><div class="loc-dot"></div><div class="loc-name">Leuna</div><div class="loc-region">Sachsen-Anhalt</div></div>
+      <div class="loc"><div class="loc-dot"></div><div class="loc-name">Offenburg</div><div class="loc-region">Baden-Württemberg</div></div>
+      <div class="loc"><div class="loc-dot"></div><div class="loc-name">Singen</div><div class="loc-region">Baden-Württemberg</div></div>
+      <div class="loc"><div class="loc-dot"></div><div class="loc-name">Tuningen</div><div class="loc-region">Baden-Württemberg</div></div>
+      <div class="loc"><div class="loc-dot"></div><div class="loc-name">Weiterstadt</div><div class="loc-region">Hessen</div></div>
+    </div>
+  </div>
+
+  <!-- ── CTA ────────────────────────────────────────── -->
+  <div class="cta-wrap">
+    <div class="cta-inner">
+      <div class="reveal">
+        <div class="section-eyebrow">Kontakt aufnehmen</div>
+        <h2 class="cta-title">Sie wollen<br>sicher <span class="accent">nach oben?</span></h2>
+        <p class="cta-contact">+49 7666 93 00-0 &nbsp;·&nbsp; info@becker.eu</p>
+      </div>
+      <div class="cta-actions reveal" style="transition-delay: 0.15s">
+        <a href="#" class="btn-orange">
+          Direktanfrage stellen
+          <svg class="arrow-icon" viewBox="0 0 15 15" fill="none"><path d="M2 7.5h11M13 7.5l-4-4M13 7.5l-4 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        </a>
+        <a href="#" class="btn-ghost">
+          Standort finden
+          <svg class="arrow-icon" viewBox="0 0 15 15" fill="none"><path d="M2 7.5h11M13 7.5l-4-4M13 7.5l-4 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── FOOTER ─────────────────────────────────────── -->
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-top">
         <div>
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;">
-            <span style="font-size:15px;font-weight:600;color:#0c1912;">n8n</span>
-            <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#d97706;background:rgba(254,243,199,0.8);padding:2px 7px;border-radius:4px;border:1px solid rgba(217,119,6,0.15);">Workflow-Engine</span>
-          </div>
-          <p style="font-size:13px;line-height:1.65;color:#7a9882;">Automatisierter Daten-Abruf via API. Fehler-Handling und Feld-Mapping visuell modelliert.</p>
+          <img class="footer-logo" src="/assets/logo.jpg" alt="Paul Becker GmbH">
+          <p class="footer-tagline">Meisterwerke in Orange seit 1926. Gerüstbau, Arbeitsbühnen, Stapler und Containerdienst — bundesweit zuverlässig für Ihr Projekt.</p>
         </div>
-      </div>
 
-      <div class="card-mid" style="padding:26px;display:flex;gap:18px;align-items:flex-start;">
-        <div style="width:46px;height:46px;border-radius:11px;background:#f0fdf4;border:1px solid rgba(22,163,74,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><ellipse cx="12" cy="6" rx="8" ry="3" stroke="#16a34a" stroke-width="1.5"/><path d="M4 6v6c0 1.657 3.582 3 8 3s8-1.343 8-3V6" stroke="#16a34a" stroke-width="1.5"/><path d="M4 12v6c0 1.657 3.582 3 8 3s8-1.343 8-3v-6" stroke="#16a34a" stroke-width="1.5"/></svg>
-        </div>
         <div>
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;">
-            <span style="font-size:15px;font-weight:600;color:#0c1912;">Datenbank</span>
-            <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#16a34a;background:#f0fdf4;padding:2px 7px;border-radius:4px;border:1px solid rgba(22,163,74,0.18);">Persistenz</span>
+          <div class="footer-col-label">Dienstleistungen</div>
+          <div class="footer-links">
+            <a href="#">Gerüstbau</a>
+            <a href="#">Arbeitsbühnen</a>
+            <a href="#">Stapler</a>
+            <a href="#">Containerdienst</a>
           </div>
-          <p style="font-size:13px;line-height:1.65;color:#7a9882;">Alle Rohdaten persistent gespeichert. Basis für Zeitreihen-Analyse und Audit-Trail.</p>
         </div>
-      </div>
 
-      <div class="card-mid" style="padding:26px;display:flex;gap:18px;align-items:flex-start;">
-        <div style="width:46px;height:46px;border-radius:11px;background:rgba(254,226,226,0.6);border:1px solid rgba(220,38,38,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="12" width="4" height="9" rx="1" stroke="#dc2626" stroke-width="1.5"/><rect x="10" y="7" width="4" height="14" rx="1" stroke="#dc2626" stroke-width="1.5"/><rect x="17" y="3" width="4" height="18" rx="1" stroke="#dc2626" stroke-width="1.5"/></svg>
-        </div>
         <div>
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;">
-            <span style="font-size:15px;font-weight:600;color:#0c1912;">Grafana</span>
-            <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#dc2626;background:rgba(254,226,226,0.7);padding:2px 7px;border-radius:4px;border:1px solid rgba(220,38,38,0.12);">Leitstellen-Dashboard</span>
+          <div class="footer-col-label">Unternehmen</div>
+          <div class="footer-links">
+            <a href="#">Über uns</a>
+            <a href="#">Standorte</a>
+            <a href="#">Karriere</a>
+            <a href="#">News</a>
           </div>
-          <p style="font-size:13px;line-height:1.65;color:#7a9882;">Echtzeit-Visualisierung. Ampel-Status, Zeitreihen und Systemgesundheit auf einem Screen.</p>
         </div>
-      </div>
 
-      <div class="card-mid" style="padding:26px;display:flex;gap:18px;align-items:flex-start;">
-        <div style="width:46px;height:46px;border-radius:11px;background:#f0fdf4;border:1px solid rgba(22,163,74,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 00-9.78 2.096A4.001 4.001 0 003 15z" stroke="#16a34a" stroke-width="1.5"/></svg>
-        </div>
         <div>
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;">
-            <span style="font-size:15px;font-weight:600;color:#0c1912;">Wetter + Sensor APIs</span>
-            <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#16a34a;background:#f0fdf4;padding:2px 7px;border-radius:4px;border:1px solid rgba(22,163,74,0.18);">Datenquellen</span>
-          </div>
-          <p style="font-size:13px;line-height:1.65;color:#7a9882;">Wetter + Pegel-Sensordaten. Cross-Validation beider Quellen verhindert Fehlalarme.</p>
-        </div>
-      </div>
-
-    </div>
-    <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:26px;" class="fade-up">
-      <span class="tech-pill">REST APIs</span>
-      <span class="tech-pill">JSON / Webhook</span>
-      <span class="tech-pill">Open Source</span>
-      <span class="tech-pill">Harte Schwellenwerte</span>
-      <span class="tech-pill">24/7-Dauerbetrieb</span>
-      <span class="tech-pill">Zeitreihen-Monitoring</span>
-      <span class="tech-pill">Mail + Messenger Alert</span>
-      <span class="tech-pill">Sensor-Fallback</span>
-    </div>
-  </div>
-</section>
-
-<!-- Future / Embed -->
-<section id="future" style="padding:96px 0;background:#fff;">
-  <div style="max-width:1100px;margin:0 auto;padding:0 24px;">
-    <div style="margin-bottom:56px;" class="fade-up">
-      <span class="badge" style="margin-bottom:16px;display:inline-flex;">05 — Zukunft</span>
-      <h2 style="font-size:clamp(28px,4vw,48px);font-weight:700;color:#0c1912;line-height:1.1;margin-bottom:18px;">Überall einbettbar.<br/>Ein Snippet, fertig.</h2>
-      <p style="font-size:16px;line-height:1.8;color:#3d6849;max-width:560px;">Das Ampel-Widget lässt sich in jede bestehende Website integrieren — Gemeinde-Portal, Tourismusseite, App. Aktueller Status, immer live.</p>
-    </div>
-
-    <div id="future-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:start;" class="fade-up">
-
-      <!-- Browser mockup -->
-      <div>
-        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#b3c9ba;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:12px;">Vorschau — Eingebettet auf einer Seite</div>
-        <div style="border-radius:14px;overflow:hidden;border:1px solid rgba(22,163,74,0.16);box-shadow:0 8px 32px rgba(0,0,0,0.1),0 2px 6px rgba(0,0,0,0.06);">
-          <div style="background:#f0f7f3;padding:10px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(22,163,74,0.1);">
-            <div style="display:flex;gap:5px;">
-              <div style="width:10px;height:10px;border-radius:50%;background:rgba(220,38,38,0.3);"></div>
-              <div style="width:10px;height:10px;border-radius:50%;background:rgba(217,119,6,0.25);"></div>
-              <div style="width:10px;height:10px;border-radius:50%;background:rgba(22,163,74,0.25);"></div>
-            </div>
-            <div style="flex:1;background:#fff;border:1px solid rgba(22,163,74,0.12);border-radius:6px;padding:4px 10px;font-family:'JetBrains Mono',monospace;font-size:10px;color:#b3c9ba;">gemeinde-gaienhofen.de/marienschlucht</div>
-          </div>
-          <div style="background:#fff;padding:20px 20px 0;">
-            <div style="height:10px;background:#f0f7f3;border-radius:4px;width:55%;margin-bottom:8px;"></div>
-            <div style="height:8px;background:#f5faf7;border-radius:4px;width:80%;margin-bottom:6px;"></div>
-            <div style="height:8px;background:#f5faf7;border-radius:4px;width:65%;margin-bottom:20px;"></div>
-
-            <!-- Widget (dark) -->
-            <div style="border-radius:12px;border:1px solid rgba(34,197,94,0.25);background:#060d09;overflow:hidden;box-shadow:0 0 0 3px rgba(34,197,94,0.04),0 4px 20px rgba(0,0,0,0.15);">
-              <div style="padding:11px 14px;background:rgba(17,35,24,0.95);border-bottom:1px solid rgba(61,138,86,0.12);display:flex;align-items:center;justify-content:space-between;">
-                <div style="display:flex;align-items:center;gap:7px;">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M12 3L21 20H3Z" stroke="#22c55e" stroke-width="1.5" stroke-linejoin="round"/></svg>
-                  <span style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;color:#7dcc93;letter-spacing:0.06em;">MARIENSCHLUCHT</span>
-                </div>
-                <div style="display:flex;align-items:center;gap:5px;">
-                  <span class="signal-dot" style="width:6px;height:6px;"></span>
-                  <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(184,234,196,0.35);letter-spacing:0.05em;">LIVE</span>
-                </div>
-              </div>
-              <div style="padding:14px;display:flex;align-items:center;gap:14px;">
-                <div style="padding:9px 8px;background:rgba(11,24,18,0.9);border-radius:9px;border:1px solid rgba(61,138,86,0.15);display:flex;flex-direction:column;gap:7px;align-items:center;flex-shrink:0;">
-                  <div style="width:13px;height:13px;border-radius:50%;background:#ef4444;box-shadow:0 0 8px rgba(239,68,68,0.7);"></div>
-                  <div style="width:13px;height:13px;border-radius:50%;background:#eab308;opacity:0.22;"></div>
-                  <div style="width:13px;height:13px;border-radius:50%;background:#22c55e;opacity:0.22;"></div>
-                </div>
-                <div style="flex:1;">
-                  <div style="font-size:13px;font-weight:700;color:#ef4444;margin-bottom:3px;">Zugang gesperrt</div>
-                  <div style="font-size:11px;color:rgba(184,234,196,0.42);margin-bottom:9px;">Erhöhter Wasserstand</div>
-                  <div style="display:flex;gap:10px;">
-                    <div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(184,234,196,0.3);text-transform:uppercase;margin-bottom:2px;">Pegel</div><div style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:#d4e8da;">1.84 m</div></div>
-                    <div style="width:1px;background:rgba(61,138,86,0.1);"></div>
-                    <div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(184,234,196,0.3);text-transform:uppercase;margin-bottom:2px;">Regen</div><div style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:#d4e8da;">12 mm</div></div>
-                    <div style="width:1px;background:rgba(61,138,86,0.1);"></div>
-                    <div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(184,234,196,0.3);text-transform:uppercase;margin-bottom:2px;">Update</div><div style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:#d4e8da;">vor 2 min</div></div>
-                  </div>
-                </div>
-              </div>
-              <div style="padding:7px 14px;background:rgba(17,35,24,0.5);border-top:1px solid rgba(61,138,86,0.08);display:flex;justify-content:space-between;">
-                <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(184,234,196,0.18);">ampelsystem-marienschlucht.de</span>
-                <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(34,197,94,0.35);">powered by alm ∆</span>
-              </div>
-            </div>
-
-            <div style="padding:18px 0;">
-              <div style="height:8px;background:#f5faf7;border-radius:4px;width:70%;margin-bottom:6px;"></div>
-              <div style="height:8px;background:#f0f7f3;border-radius:4px;width:45%;"></div>
-            </div>
+          <div class="footer-col-label">Kontakt</div>
+          <div class="footer-links">
+            <a href="tel:+4976669300">+49 7666 93 00-0</a>
+            <a href="mailto:info@becker.eu">info@becker.eu</a>
+            <a href="#">Direktanfrage</a>
+            <a href="#">Jobportal</a>
           </div>
         </div>
       </div>
 
-      <!-- Code + features -->
-      <div style="display:flex;flex-direction:column;gap:18px;">
-        <div>
-          <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#b3c9ba;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:12px;">Einbindung per iframe</div>
-          <div style="border-radius:12px;overflow:hidden;border:1px solid rgba(22,163,74,0.15);box-shadow:0 4px 14px rgba(0,0,0,0.07);">
-            <div style="background:#f0f7f3;padding:10px 14px;border-bottom:1px solid rgba(22,163,74,0.1);display:flex;align-items:center;justify-content:space-between;">
-              <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#16a34a;background:#fff;padding:2px 8px;border-radius:4px;border:1px solid rgba(22,163,74,0.18);">HTML</span>
-              <button onclick="copyCode()" id="copy-btn"
-                style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#7a9882;background:none;border:none;cursor:pointer;letter-spacing:0.04em;padding:3px 8px;border-radius:4px;transition:color 0.15s ease,background 0.15s ease;"
-                onmouseover="this.style.color='#0c1912';this.style.background='rgba(22,163,74,0.08)'"
-                onmouseout="this.style.color='#7a9882';this.style.background='none'"
-                onmousedown="this.style.opacity='0.6'" onmouseup="this.style.opacity='1'"
-                onfocus="this.style.outline='2px solid rgba(22,163,74,0.3)'" onblur="this.style.outline='none'">
-                Kopieren
-              </button>
-            </div>
-            <div style="background:#0d1a12;padding:18px;">
-              <pre style="font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.75;margin:0;white-space:pre-wrap;"><span style="color:rgba(184,234,196,0.28);">&lt;!-- Ampelstatus Marienschlucht --&gt;</span>
-<span style="color:#4ade80;">&lt;iframe</span>
-  <span style="color:#86efac;">src</span><span style="color:rgba(255,255,255,0.3);">=</span><span style="color:#bbf7d0;">"https://widget.marienschlucht.de"</span>
-  <span style="color:#86efac;">width</span><span style="color:rgba(255,255,255,0.3);">=</span><span style="color:#bbf7d0;">"100%"</span>
-  <span style="color:#86efac;">height</span><span style="color:rgba(255,255,255,0.3);">=</span><span style="color:#bbf7d0;">"120"</span>
-  <span style="color:#86efac;">frameborder</span><span style="color:rgba(255,255,255,0.3);">=</span><span style="color:#bbf7d0;">"0"</span>
-  <span style="color:#86efac;">loading</span><span style="color:rgba(255,255,255,0.3);">=</span><span style="color:#bbf7d0;">"lazy"</span>
-<span style="color:#4ade80;">&gt;&lt;/iframe&gt;</span></pre>
-            </div>
-          </div>
-        </div>
-
-        <div class="card" style="padding:22px;">
-          <div style="font-size:13px;font-weight:600;color:#0c1912;margin-bottom:14px;">Was das Widget kann</div>
-          <div style="display:flex;flex-direction:column;gap:11px;">
-            <div style="display:flex;gap:10px;align-items:flex-start;">
-              <div style="width:18px;height:18px;border-radius:5px;background:#f0fdf4;border:1px solid rgba(22,163,74,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">
-                <svg width="9" height="9" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#16a34a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </div>
-              <div><div style="font-size:13px;font-weight:500;color:#0c1912;margin-bottom:1px;">Immer aktuell</div><div style="font-size:12px;color:#7a9882;line-height:1.5;">Live-Daten aus dem Backend — kein manuelles Update.</div></div>
-            </div>
-            <div style="display:flex;gap:10px;align-items:flex-start;">
-              <div style="width:18px;height:18px;border-radius:5px;background:#f0fdf4;border:1px solid rgba(22,163,74,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">
-                <svg width="9" height="9" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#16a34a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </div>
-              <div><div style="font-size:13px;font-weight:500;color:#0c1912;margin-bottom:1px;">Überall integrierbar</div><div style="font-size:12px;color:#7a9882;line-height:1.5;">Eine Zeile HTML — WordPress, Typo3, Joomla, statische Seiten.</div></div>
-            </div>
-            <div style="display:flex;gap:10px;align-items:flex-start;">
-              <div style="width:18px;height:18px;border-radius:5px;background:#f0fdf4;border:1px solid rgba(22,163,74,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">
-                <svg width="9" height="9" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#16a34a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </div>
-              <div><div style="font-size:13px;font-weight:500;color:#0c1912;margin-bottom:1px;">Theme-Optionen</div><div style="font-size:12px;color:#7a9882;line-height:1.5;">Dark/Light via URL-Parameter: <span style="font-family:'JetBrains Mono',monospace;color:#16a34a;font-size:11px;">?theme=light</span></div></div>
-            </div>
-          </div>
+      <div class="footer-bottom">
+        <div class="footer-copy">© 2026 Paul Becker GmbH. Alle Rechte vorbehalten.</div>
+        <div class="footer-legal">
+          <a href="#">Impressum</a>
+          <a href="#">Datenschutz</a>
+          <a href="#">AGB</a>
         </div>
       </div>
     </div>
-  </div>
-</section>
+  </footer>
 
-<!-- Footer -->
-<footer style="padding:72px 0 44px;background:#f0f7f3;border-top:1px solid rgba(22,163,74,0.1);">
-  <div style="max-width:1100px;margin:0 auto;padding:0 24px;">
-    <div id="footer-grid" style="display:grid;grid-template-columns:1fr auto;gap:48px;align-items:center;margin-bottom:56px;" class="fade-up">
-      <div>
-        <h2 style="font-size:clamp(24px,3.5vw,40px);font-weight:700;color:#0c1912;line-height:1.15;letter-spacing:-0.03em;margin-bottom:14px;">Bereit für die Live-Demo<br/>vor dem Bürgermeister.</h2>
-        <p style="font-size:15px;line-height:1.75;color:#3d6849;max-width:460px;">Tag 10: Die vollständige Datenkette von Sensor bis Ampel-Signal — transparent, nachvollziehbar, produktionsreif.</p>
-      </div>
-      <div style="display:flex;flex-direction:column;align-items:center;gap:14px;">
-        <div style="padding:20px 16px;border-radius:16px;background:#fff;border:1px solid rgba(22,163,74,0.18);box-shadow:0 4px 20px rgba(0,0,0,0.08);">
-          <div style="display:flex;flex-direction:column;gap:10px;align-items:center;">
-            <div style="width:18px;height:18px;border-radius:50%;background:#ef4444;opacity:0.25;"></div>
-            <div style="width:18px;height:18px;border-radius:50%;background:#d97706;opacity:0.25;"></div>
-            <div style="width:18px;height:18px;border-radius:50%;background:#16a34a;box-shadow:0 0 16px rgba(22,163,74,0.5);"></div>
-          </div>
-        </div>
-        <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#16a34a;letter-spacing:0.08em;text-transform:uppercase;">System aktiv</span>
-      </div>
-    </div>
-    <div style="border-top:1px solid rgba(22,163,74,0.1);padding-top:28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;">
-      <div style="display:flex;align-items:center;gap:9px;">
-        <div style="width:22px;height:22px;background:#f0fdf4;border:1px solid rgba(22,163,74,0.2);border-radius:5px;display:flex;align-items:center;justify-content:center;">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M12 3L21 20H3Z" stroke="#16a34a" stroke-width="1.5" stroke-linejoin="round"/></svg>
-        </div>
-        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#b3c9ba;letter-spacing:0.04em;">Ampelsystem Marienschlucht · MVP</span>
-      </div>
-      <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#d1e4d7;letter-spacing:0.04em;">v1.0.0 · 10-Tage-Sprint</span>
-    </div>
-  </div>
-</footer>
+  <script>
+    // Hero background zoom-in on load
+    const heroBg = document.getElementById('heroBg');
+    requestAnimationFrame(() => heroBg.classList.add('zoomed'));
 
-<script>
-  // ── Weather slider ──
-  const states = [
-    {
-      scene: 'sun',
-      light: 'green',
-      label: 'Zugang freigegeben',
-      sky: 'linear-gradient(180deg,#1e7fc0 0%,#5ab4de 45%,#a2d5f0 100%)'
-    },
-    {
-      scene: 'cloud',
-      light: 'yellow',
-      label: 'Wetterlage beobachten',
-      sky: 'linear-gradient(180deg,#6b7f8c 0%,#9fb4bf 45%,#c8d8e0 100%)'
-    },
-    {
-      scene: 'rain',
-      light: 'red',
-      label: 'Zugang gesperrt',
-      sky: 'linear-gradient(180deg,#1f2937 0%,#374151 45%,#4b5563 100%)'
-    }
-  ];
+    // Scroll reveal
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          observer.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.05, rootMargin: '0px 0px -50px 0px' });
 
-  let current = 0;
-  let autoTimer;
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
-  function weatherGoTo(idx) {
-    const prev = current;
-    if (idx === prev) return;
-    current = idx;
+    // Fallback: reveal all elements after 3s (ensures full-page screenshots show content)
+    setTimeout(() => {
+      document.querySelectorAll('.reveal:not(.visible)').forEach(el => el.classList.add('visible'));
+    }, 100);
+  </script>
 
-    // Scenes
-    document.getElementById('scene-' + states[prev].scene).style.opacity = '0';
-    document.getElementById('scene-' + states[current].scene).style.opacity = '1';
-
-    // Sky
-    document.getElementById('weather-sky').style.background = states[current].sky;
-
-    // Traffic light
-    ['red','yellow','green'].forEach(c => document.getElementById('tl-' + c).classList.remove('on'));
-    document.getElementById('tl-' + states[current].light).classList.add('on');
-
-    // Label
-    const lbl = document.getElementById('weather-label');
-    lbl.style.opacity = '0';
-    setTimeout(() => { lbl.textContent = states[current].label; lbl.style.opacity = '1'; }, 300);
-
-    // Dots
-    document.querySelectorAll('.s-dot').forEach((d,i) => d.classList.toggle('active', i === current));
-
-    // Progress bar reset
-    resetProgress();
-  }
-
-  function resetProgress() {
-    const bar = document.getElementById('progress-bar');
-    bar.style.transition = 'none';
-    bar.style.width = '0%';
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      bar.style.transition = 'width 4s linear';
-      bar.style.width = '100%';
-    }));
-  }
-
-  function nextWeather() { weatherGoTo((current + 1) % 3); }
-
-  // Init
-  document.getElementById('weather-sky').style.background = states[0].sky;
-  document.getElementById('tl-green').classList.add('on');
-  resetProgress();
-  autoTimer = setInterval(nextWeather, 4000);
-
-  // Pause on hover
-  document.getElementById('weather-wrap').addEventListener('mouseenter', () => clearInterval(autoTimer));
-  document.getElementById('weather-wrap').addEventListener('mouseleave', () => {
-    resetProgress();
-    autoTimer = setInterval(nextWeather, 4000);
-  });
-
-  // ── Scroll fade-up ──
-  const obs = new IntersectionObserver((entries) => {
-    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
-  }, { threshold: 0.08, rootMargin: '0px 0px -28px 0px' });
-  document.querySelectorAll('.fade-up').forEach((el,i) => {
-    el.style.transitionDelay = `${(i % 4) * 65}ms`;
-    obs.observe(el);
-  });
-
-  // ── Copy code ──
-  function copyCode() {
-    const code = `<!-- Ampelstatus Marienschlucht -->\n<iframe\n  src="https://widget.marienschlucht.de"\n  width="100%"\n  height="120"\n  frameborder="0"\n  loading="lazy"\n></iframe>`;
-    navigator.clipboard.writeText(code).then(() => {
-      const btn = document.getElementById('copy-btn');
-      btn.textContent = 'Kopiert ✓';
-      btn.style.color = '#16a34a';
-      setTimeout(() => { btn.textContent = 'Kopieren'; btn.style.color = '#7a9882'; }, 2000);
-    });
-  }
-</script>
 </body>
 </html>
